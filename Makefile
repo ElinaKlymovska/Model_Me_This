@@ -41,15 +41,15 @@ monitor: ## Monitor vast.ai instance
 
 build: ## Build Docker image
 	@echo "🏗️  Building Docker image..."
-	docker-compose build
+	cd docker && docker-compose build
 
 run: ## Run locally with Docker
 	@echo "🏃 Running locally with Docker..."
-	docker-compose up -d
+	cd docker && docker-compose up -d
 
 clean: ## Clean up Docker resources
 	@echo "🧹 Cleaning up Docker resources..."
-	docker-compose down --volumes --remove-orphans
+	cd docker && docker-compose down --volumes --remove-orphans
 	docker system prune -f
 
 test-connection: ## Test SSH connection to vast.ai

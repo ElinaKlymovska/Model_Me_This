@@ -26,8 +26,10 @@ ADetailer_2CN/
 │   ├── face_count_analyzer.py   # Face detection analyzer
 │   ├── face_verification.py     # Result verification
 │   └── requirements.txt         # Dependencies
-├── Dockerfile                   # Container configuration
-├── docker-compose.yml           # Docker orchestration
+├── docker/                      # Docker configuration
+│   ├── Dockerfile              # Container configuration
+│   ├── docker-compose.yml      # Docker orchestration
+│   └── README.md               # Docker documentation
 ├── deploy_vast.sh              # vast.ai deployment script
 ├── upload_images.sh            # Image upload script
 ├── download_results.sh         # Results download script
@@ -162,6 +164,25 @@ python face_verification.py
 - Reports face count changes
 - Performance analysis
 
+## 🐳 Docker Configuration
+
+Всі Docker файли організовані в папці `docker/`:
+
+- **`docker/Dockerfile`** - Основний образ з CUDA та Stable Diffusion
+- **`docker/docker-compose.yml`** - Локальне розгортання
+- **`docker/README.md`** - Детальна документація Docker
+
+### **Локальний запуск**
+```bash
+# Збірка та запуск
+make build
+make run
+
+# Або безпосередньо
+cd docker
+docker-compose up --build
+```
+
 ## 🚀 vast.ai Deployment
 
 ### **SSH Connection**
@@ -179,7 +200,7 @@ ssh -p 18826 root@ssh4.vast.ai -L 8080:localhost:7860
 
 ### **Docker Environment**
 ```yaml
-# docker-compose.yml
+# docker/docker-compose.yml
 environment:
   - NVIDIA_VISIBLE_DEVICES=all
   - NVIDIA_DRIVER_CAPABILITIES=compute,utility
@@ -208,7 +229,7 @@ volumes:
 make test-connection
 
 # Check logs
-docker-compose logs
+cd docker && docker-compose logs
 
 # Monitor resources
 make monitor
