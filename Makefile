@@ -1,75 +1,57 @@
-.PHONY: help deploy upload download monitor build run clean
+# Makefile for Portrait Enhancer Project
+# Simplified version with essential commands only
 
-help: ## Показати довідку
-	@echo "Portrait Enhancement Pipeline - Makefile"
+.PHONY: help deploy upload download monitor build run clean test-connection
+
+help: ## Show this help message
+	@echo "🎨 Portrait Enhancer - Available Commands:"
 	@echo ""
-	@echo "Доступні команди:"
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
+	@echo "🚀 Deployment:"
+	@echo "  deploy          Deploy to vast.ai"
+	@echo "  upload          Upload images to vast.ai"
+	@echo "  download        Download results from vast.ai"
+	@echo "  monitor         Monitor vast.ai instance"
+	@echo ""
+	@echo "🏗️  Local Development:"
+	@echo "  build           Build Docker image"
+	@echo "  run             Run locally with Docker"
+	@echo "  clean           Clean up Docker resources"
+	@echo ""
+	@echo "🔗 Testing:"
+	@echo "  test-connection Test SSH connection to vast.ai"
+	@echo ""
+	@echo "📚 Help:"
+	@echo "  help            Show this help message"
 
-deploy: ## Розгорнути проект на vast.ai
-	@echo "🚀 Розгортання проекту на vast.ai..."
+deploy: ## Deploy project to vast.ai
+	@echo "🚀 Deploying to vast.ai..."
 	./deploy_vast.sh
 
-upload: ## Завантажити зображення на vast.ai
-	@echo "📤 Завантаження зображень..."
+upload: ## Upload images to vast.ai
+	@echo "📤 Uploading images to vast.ai..."
 	./upload_images.sh
 
-download: ## Завантажити результати з vast.ai
-	@echo "📥 Завантаження результатів..."
+download: ## Download results from vast.ai
+	@echo "📥 Downloading results from vast.ai..."
 	./download_results.sh
 
-monitor: ## Моніторинг процесу на vast.ai
-	@echo "📊 Моніторинг процесу..."
+monitor: ## Monitor vast.ai instance
+	@echo "📊 Monitoring vast.ai instance..."
 	./monitor.sh
 
-build: ## Збудувати Docker образ
-	@echo "🔨 Будування Docker образу..."
+build: ## Build Docker image
+	@echo "🏗️  Building Docker image..."
 	docker-compose build
 
-run: ## Запустити локально через Docker
-	@echo "🏃 Запуск локально..."
-	docker-compose up
-
-run-detached: ## Запустити локально через Docker у фоновому режимі
-	@echo "🏃 Запуск локально у фоновому режимі..."
+run: ## Run locally with Docker
+	@echo "🏃 Running locally with Docker..."
 	docker-compose up -d
 
-stop: ## Зупинити Docker контейнери
-	@echo "🛑 Зупинка контейнерів..."
-	docker-compose down
+clean: ## Clean up Docker resources
+	@echo "🧹 Cleaning up Docker resources..."
+	docker-compose down --volumes --remove-orphans
+	docker system prune -f
 
-clean: ## Очистити Docker ресурси
-	@echo "🧹 Очищення Docker ресурсів..."
-	docker-compose down --rmi all --volumes --remove-orphans
-
-status: ## Перевірити статус Docker контейнерів
-	@echo "📊 Статус контейнерів..."
-	docker-compose ps
-
-logs: ## Показати логи Docker контейнерів
-	@echo "📝 Логи контейнерів..."
-	docker-compose logs -f
-
-ssh: ## Підключитися до vast.ai через SSH
-	@echo "🔌 Підключення до vast.ai..."
-	ssh -p 18826 root@ssh4.vast.ai -L 8080:localhost:8080
-
-setup: ## Налаштувати проект (перший раз)
-	@echo "⚙️ Налаштування проекту..."
-	mkdir -p portrait-enhancer/{input,work,output}
-	chmod +x *.sh
-	@echo "✅ Проект налаштовано!"
-
-test-connection: ## Перевірити з'єднання з vast.ai
-	@echo "🔍 Перевірка з'єднання з vast.ai..."
+test-connection: ## Test SSH connection to vast.ai
+	@echo "🔗 Testing SSH connection to vast.ai..."
 	ssh -p 18826 -o ConnectTimeout=10 root@ssh4.vast.ai 'echo "✅ З'\''єднання успішне!"'
-
-test-ad2cn: ## Тестувати ADetailer 2CN Plus інтеграцію
-	@echo "🧪 Тестування ADetailer 2CN Plus..."
-	./test_ad2cn.sh
-
-enhanced-upload: ## Завантажити зображення та обробити з ADetailer 2CN Plus
-	@echo "🎯 Завантаження зображень з розширеною обробкою..."
-	./upload_images.sh
-	@echo "🚀 Запуск розширеної обробки..."
-	ssh -p 18826 root@ssh4.vast.ai 'cd /workspace && python portrait-enhancer/enhanced_batch.py --use-ad2cn'

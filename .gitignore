@@ -46,13 +46,9 @@ venv.bak/
 ehthumbs.db
 Thumbs.db
 
-# Project specific
-runpod-pack/preset-contour/work/
-runpod-pack/preset-contour/output/
-runpod-pack/preset-contour/input/
-runpod-pack/preset-contour/.venv/
-runpod-pack/stable-diffusion-webui/
-runpod-pack/models/
+# Docker
+.dockerignore
+docker-compose.override.yml
 
 # Logs
 *.log
@@ -64,6 +60,37 @@ logs/
 temp/
 tmp/
 
-# Docker
-.dockerignore
-docker-compose.override.yml
+# Output directories (keep structure, ignore content)
+portrait-enhancer/output/*
+!portrait-enhancer/output/.gitkeep
+portrait-enhancer/work/*
+!portrait-enhancer/work/.gitkeep
+
+# Input images (keep structure, ignore content)
+portrait-enhancer/input/*
+!portrait-enhancer/input/.gitkeep
+
+# Models and large files
+models/
+*.safetensors
+*.ckpt
+*.pt
+*.pth
+
+# Analysis results (keep structure, ignore content)
+*.txt
+!README.md
+!DEPLOYMENT.md
+!INTEGRATION.md
+
+# SSH keys and sensitive data
+*.pem
+*.key
+*.pub
+.env.local
+.env.production
+
+# Backup files
+*.bak
+*.backup
+*~

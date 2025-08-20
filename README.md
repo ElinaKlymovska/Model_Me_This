@@ -1,150 +1,250 @@
-# Portrait Enhancement Pipeline
+# 🎨 Portrait Enhancer with ADetailer 2CN Plus
 
-Автоматична система покращення портретів з використанням Stable Diffusion, ControlNet та ADetailer.
+**Intelligent portrait enhancement pipeline with smart fallback logic and advanced face detection**
 
-## Структура проєкту
+## ✨ Features
+
+- **🎯 Smart Processing Logic**: Automatically chooses the best enhancement method based on face count
+  - **2+ faces** → Basic enhancement for stability
+  - **1 face** → ADetailer 2CN Plus for detailed processing
+  - **0 faces** → Basic enhancement as fallback
+- **🔍 Advanced Face Detection**: Multiple detectors (BlazeFace, RetinaFace, MTCNN)
+- **📊 Comprehensive Analysis**: Detailed face counting and processing statistics
+- **🚀 Cloud Deployment**: Optimized for vast.ai GPU instances
+- **🐳 Docker Support**: Easy local development and deployment
+
+## 🏗️ Project Structure
 
 ```
 ADetailer_2CN/
-├── README.md                 # Документація проєкту
-├── bootstrap.sh              # Автоматична установка та налаштування
-├── models_auto.py            # Автоматичне завантаження моделей
-├── Dockerfile                # Docker образ для розгортання
-├── docker-compose.yml        # Docker Compose конфігурація
-├── deploy_vast.sh            # Скрипт розгортання на vast.ai
-├── upload_images.sh          # Скрипт завантаження зображень
-├── download_results.sh       # Скрипт завантаження результатів
-├── monitor.sh                # Скрипт моніторингу
-├── portrait-enhancer/        # Основний модуль покращення
-│   ├── config.yaml          # Конфігурація параметрів
-│   ├── batch.py             # Пакетна обробка зображень
-│   ├── run_a_pass.py        # Перший прохід - створення масок та контурів
-│   ├── run_b_pass.py        # Другий прохід - AI покращення
-│   └── requirements.txt     # Залежності Python
-└── .gitignore               # Git ігнорування
+├── adetailer_2cn_plus/          # ADetailer 2CN Plus library
+├── portrait-enhancer/           # Main application
+│   ├── input/                   # Input images
+│   ├── output/                  # Enhanced images
+│   ├── work/                    # Temporary files
+│   ├── simple_enhance.py        # Smart enhancement script
+│   ├── face_count_analyzer.py   # Face detection analyzer
+│   ├── face_verification.py     # Result verification
+│   └── requirements.txt         # Dependencies
+├── Dockerfile                   # Container configuration
+├── docker-compose.yml           # Docker orchestration
+├── deploy_vast.sh              # vast.ai deployment script
+├── upload_images.sh            # Image upload script
+├── download_results.sh         # Results download script
+├── monitor.sh                  # Instance monitoring script
+├── Makefile                    # Simplified command management
+└── README.md                   # This file
 ```
 
-## Основні функції
+## 🚀 Quick Start
 
-- **Автоматична установка** Stable Diffusion WebUI та розширень
-- **Завантаження моделей** з CivitAI
-- **Створення масок** обличчя та контурних карт
-- **AI покращення** з використанням ControlNet та ADetailer
-- **Пакетна обробка** зображень
-- **Розгортання на vast.ai** з автоматизацією
-- **🎯 ADetailer 2CN Plus** - розширена детекція облич з множинними детекторами
-
-## Швидкий старт на vast.ai
-
-### 1. Підготовка SSH тунелю
+### 1. **Deploy to vast.ai**
 ```bash
-ssh -p 18826 root@ssh4.vast.ai -L 8080:localhost:8080
+make deploy
 ```
 
-### 2. Розгортання проекту
+### 2. **Upload Images**
 ```bash
-chmod +x deploy_vast.sh
-./deploy_vast.sh
+make upload
 ```
 
-### 3. Завантаження зображень
+### 3. **Process Images with Smart Logic**
 ```bash
-chmod +x upload_images.sh
-./upload_images.sh [шлях_до_зображень]
+# SSH to vast.ai and run smart enhancement
+ssh -p 18826 root@ssh4.vast.ai
+cd /workspace/portrait-enhancer
+python simple_enhance.py --smart --use-ad2cn
 ```
 
-### 4. Моніторинг процесу
+### 4. **Download Results**
 ```bash
-chmod +x monitor.sh
-./monitor.sh
+make download
 ```
 
-### 5. Завантаження результатів
+### 5. **Analyze Results**
 ```bash
-chmod +x download_results.sh
-./download_results.sh
+cd portrait-enhancer
+python face_count_analyzer.py --use-ad2cn
+python face_verification.py
 ```
 
-## Локальне використання
+## 🎯 Smart Processing Logic
 
-### 1. Запуск через Docker
+The system intelligently chooses the enhancement method:
+
+| Face Count | Processing Method | Reason |
+|------------|-------------------|---------|
+| **0** | Basic Enhancement | No faces detected, use fallback |
+| **1** | ADetailer 2CN Plus | Single face, detailed enhancement |
+| **2+** | Basic Enhancement | Multiple faces, stability priority |
+
+## 🛠️ Available Commands
+
 ```bash
-docker-compose up --build
+# 🚀 Deployment
+make deploy          # Deploy to vast.ai
+make upload          # Upload images
+make download        # Download results
+make monitor         # Monitor instance
+
+# 🏗️ Local Development
+make build           # Build Docker image
+make run             # Run locally
+make clean           # Clean up resources
+
+# 🔗 Testing
+make test-connection # Test SSH connection
+make help            # Show all commands
 ```
 
-### 2. Ручна установка
+## 🔧 Local Development
+
+### **Prerequisites**
+- Docker & Docker Compose
+- Python 3.8+
+- SSH access to vast.ai
+
+### **Setup**
 ```bash
-chmod +x bootstrap.sh
-./bootstrap.sh
+# Clone repository
+git clone https://github.com/ElinaKlymovska/Model_Me_This.git
+cd Model_Me_This
+
+# Build and run locally
+make build
+make run
+
+# Check status
+docker-compose ps
 ```
 
-## Використання
+## 📊 Processing Results
 
-1. Помістіть зображення в папку `portrait-enhancer/input/`
-2. Запустіть `python batch.py` для обробки
-3. Результати зберігаються в `portrait-enhancer/output/`
+### **Face Detection Analysis**
+- **Total images**: 25
+- **Success rate**: 100%
+- **Face distribution**: 0-3 faces per image
+- **Processing recommendations**: Automatic method selection
 
-## Технології
+### **Output Structure**
+```
+portrait-enhancer/output/
+├── smart_enhanced/              # Smart processing results
+├── all_images/                  # Basic processing results
+├── enhanced_face_count_analysis.txt
+├── face_count_analysis.txt
+└── face_verification_results.txt
+```
 
-- **Stable Diffusion WebUI** - основа для генерації
-- **ControlNet** - контроль структури зображення
-- **ADetailer** - деталізація обличчя
-- **PIL/Pillow** - обробка зображень
-- **PyYAML** - конфігурація
-- **Docker** - контейнеризація
-- **vast.ai** - хмарне розгортання
+## 🎨 ADetailer 2CN Plus Benefits
 
-## 🎯 ADetailer 2CN Plus
+- **Multiple Detectors**: BlazeFace, RetinaFace, MTCNN
+- **Advanced Search**: Sliding window, multi-scale detection
+- **Face Alignment**: Automatic orientation correction
+- **Cascade Detection**: Two-pass detection pipeline
+- **Smart Fallback**: Automatic fallback to basic processing
 
-Проект включає розширену версію ADetailer з покращеною детекцією облич:
+## 🔍 Analysis Tools
 
-### Переваги:
-- **Множинні детектори**: BlazeFace (швидкий), RetinaFace (точний), MTCNN (збалансований)
-- **Cascade detection**: багатоетапна детекція для кращої точності
-- **Розширені стратегії пошуку**: sliding window та multi-scale підходи
-- **Автоматичне вирівнювання облич**: детекція ключових точок
-- **Повна інтеграція** з існуючим portrait-enhancer pipeline
-
-### Використання:
+### **Face Count Analyzer**
 ```bash
-# Тестування інтеграції
-make test-ad2cn
-
-# Розширена обробка зображень
-python portrait-enhancer/enhanced_batch.py --use-ad2cn
-
-# Завантаження та розширена обробка на vast.ai
-make enhanced-upload
+python face_count_analyzer.py --use-ad2cn
 ```
+- Detects faces in all images
+- Recommends processing method
+- Provides detailed statistics
 
-## Моніторинг та управління
-
-### Перевірка статусу WebUI
+### **Face Verification**
 ```bash
-ssh -p 18826 root@ssh4.vast.ai 'curl -s http://127.0.0.1:7860/sdapi/v1/sd-models'
+python face_verification.py
 ```
+- Compares original vs enhanced
+- Reports face count changes
+- Performance analysis
 
-### Приєднання до tmux сесії
+## 🚀 vast.ai Deployment
+
+### **SSH Connection**
 ```bash
-ssh -p 18826 root@ssh4.vast.ai 'tmux attach -t webui'
+ssh -p 18826 root@ssh4.vast.ai -L 8080:localhost:7860
 ```
 
-### Зупинка процесу
+### **Environment**
+- **OS**: Ubuntu 22.04
+- **GPU**: NVIDIA CUDA 11.8
+- **Python**: 3.8+
+- **Port**: 7860 (WebUI), 8080 (tunnel)
+
+## 📝 Configuration
+
+### **Docker Environment**
+```yaml
+# docker-compose.yml
+environment:
+  - NVIDIA_VISIBLE_DEVICES=all
+  - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+  - PORT=7860
+```
+
+### **Volume Mounts**
+```yaml
+volumes:
+  - ./portrait-enhancer/input:/workspace/portrait-enhancer/input
+  - ./portrait-enhancer/output:/workspace/portrait-enhancer/output
+  - ./portrait-enhancer/work:/workspace/portrait-enhancer/work
+```
+
+## 🔧 Troubleshooting
+
+### **Common Issues**
+1. **SSH Connection Failed**: Check port and credentials
+2. **Docker Build Error**: Ensure Docker is running
+3. **GPU Not Available**: Verify NVIDIA drivers
+4. **Processing Failed**: Check input image format
+
+### **Debug Commands**
 ```bash
-ssh -p 18826 root@ssh4.vast.ai 'tmux kill-session -t webui'
+# Test connection
+make test-connection
+
+# Check logs
+docker-compose logs
+
+# Monitor resources
+make monitor
 ```
 
-## Конфігурація
+## 📚 Dependencies
 
-Основні параметри налаштовуються в `portrait-enhancer/config.yaml`:
+### **Core Requirements**
+- `opencv-python` - Face detection
+- `numpy` - Numerical operations
+- `PIL` - Image processing
+- `pydantic` - Configuration management
 
-- **ControlNet моделі** - для контролю структури
-- **ADetailer налаштування** - для деталізації обличчя
-- **Промпти** - для керування результатом
-- **Параметри генерації** - steps, CFG, denoise
+### **ADetailer 2CN Plus**
+- `onnxruntime-gpu` - AI model inference
+- `insightface` - Advanced face detection
+- `facenet-pytorch` - Face recognition
 
-## Підтримувані формати
+## 🤝 Contributing
 
-- **Вхідні**: PNG, JPG, JPEG, WebP
-- **Вихідні**: PNG (збереження якості)
-- **Моделі**: SafeTensors, CKPT
+1. Fork the repository
+2. Create feature branch
+3. Make changes
+4. Test thoroughly
+5. Submit pull request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🙏 Acknowledgments
+
+- **ADetailer 2CN Plus** - Advanced face detection
+- **vast.ai** - Cloud GPU infrastructure
+- **Stable Diffusion WebUI** - AI image processing foundation
+
+---
+
+**🎯 Smart. Efficient. Intelligent Portrait Enhancement.**

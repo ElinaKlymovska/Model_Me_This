@@ -2,6 +2,7 @@
 """
 Simple image enhancement using ADetailer 2CN Plus for face detection
 and basic image processing without requiring WebUI.
+Enhanced with smart fallback logic: 2+ faces = basic processing, 1 face = AD2CN Plus
 """
 
 import os
@@ -12,6 +13,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 from PIL import Image, ImageEnhance, ImageFilter
+import time
 
 # Add adetailer_2cn_plus to path
 ad2cn_path = Path(__file__).parent.parent / "adetailer_2cn_plus"
@@ -28,9 +30,39 @@ except ImportError:
     AD2CN_AVAILABLE = False
     print("⚠ ADetailer 2CN Plus not available, using basic processing")
 
-def enhance_image_simple(image_path, output_path):
-    """Simple image enhancement without AI models"""
+def count_faces_basic(image_path):
+    """Count faces using OpenCV for fallback decision"""
     try:
+        # Load image
+        img = cv2.imread(image_path)
+        if img is None:
+            return 0
+        
+        # Convert to grayscale
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        
+        # Load OpenCV face cascade
+        face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+        
+        # Detect faces
+        faces = face_cascade.detectMultiScale(
+            gray,
+            scaleFactor=1.1,
+            minNeighbors=5,
+            minSize=(30, 30)
+        )
+        
+        return len(faces)
+        
+    except Exception as e:
+        print(f"Error in face counting for {image_path}: {e}")
+        return 0
+
+def enhance_image_simple(image_path, output_path):
+    """Simple image enhancement without AI models - used for 2+ faces"""
+    try:
+        print(f"  🎯 Using basic enhancement (2+ faces detected)")
+        
         # Load image
         img = Image.open(image_path)
         
@@ -54,8 +86,10 @@ def enhance_image_simple(image_path, output_path):
         return False
 
 def enhance_image_with_ad2cn(image_path, output_path, config):
-    """Enhanced image processing with ADetailer 2CN Plus"""
+    """Enhanced image processing with ADetailer 2CN Plus - used for 1 face"""
     try:
+        print(f"  🎯 Using ADetailer 2CN Plus (1 face detected)")
+        
         # Load image
         img = load_image(image_path)
         if img is None:
@@ -104,8 +138,8 @@ def enhance_image_with_ad2cn(image_path, output_path, config):
         print("Falling back to basic processing...")
         return enhance_image_simple(image_path, output_path)
 
-def process_batch(input_dir, output_dir, use_ad2cn=True):
-    """Process all images in input directory"""
+def process_batch_smart(input_dir, output_dir, use_ad2cn=True):
+    """Smart batch processing with intelligent fallback logic"""
     
     # Get all image files
     image_extensions = ['*.jpg', '*.jpeg', '*.png', '*.webp', '*.bmp']
@@ -120,9 +154,10 @@ def process_batch(input_dir, output_dir, use_ad2cn=True):
         return
     
     print(f"Found {len(image_files)} images to process")
+    print("🎯 Smart processing logic: 2+ faces = basic enhancement, 1 face = AD2CN Plus")
     
     if use_ad2cn and AD2CN_AVAILABLE:
-        print("🎯 Using ADetailer 2CN Plus for enhanced processing")
+        print("✓ ADetailer 2CN Plus available for single face processing")
         
         # Try to load config, fallback to basic if failed
         try:
@@ -139,33 +174,56 @@ def process_batch(input_dir, output_dir, use_ad2cn=True):
                 config = Config()
                 print("⚠ Using default config")
         except Exception as e:
-            print(f"⚠ Config loading failed: {e}, using basic processing")
+            print(f"⚠ Config loading failed: {e}, using basic processing for all")
             use_ad2cn = False
             config = None
     else:
-        print("⚠ Using basic image processing")
+        print("⚠ Using basic image processing for all images")
         config = None
     
     # Process each image
     successful = 0
+    basic_processing_count = 0
+    ad2cn_processing_count = 0
+    
     for i, image_path in enumerate(image_files, 1):
         print(f"\n=== [{i}/{len(image_files)}] {image_path} ===")
+        
+        # First, count faces to decide processing method
+        face_count = count_faces_basic(image_path)
+        print(f"  🔍 Detected {face_count} face(s)")
         
         # Create output path
         filename = os.path.basename(image_path)
         name, ext = os.path.splitext(filename)
         output_path = os.path.join(output_dir, f"{name}_enhanced{ext}")
         
-        # Process image
-        if use_ad2cn and AD2CN_AVAILABLE and config:
+        # Smart processing decision
+        if face_count >= 2:
+            # 2+ faces: use basic processing
+            print(f"  📊 Multiple faces detected ({face_count}), using basic enhancement")
+            success = enhance_image_simple(image_path, output_path)
+            if success:
+                basic_processing_count += 1
+        elif face_count == 1 and use_ad2cn and AD2CN_AVAILABLE and config:
+            # 1 face: use ADetailer 2CN Plus
+            print(f"  🎯 Single face detected, using ADetailer 2CN Plus")
             try:
                 success = enhance_image_with_ad2cn(image_path, output_path, config)
+                if success:
+                    ad2cn_processing_count += 1
             except Exception as e:
                 print(f"  ADetailer 2CN Plus failed: {e}")
                 print("  Falling back to basic processing...")
                 success = enhance_image_simple(image_path, output_path)
+                if success:
+                    basic_processing_count += 1
         else:
+            # No faces or fallback: use basic processing
+            print(f"  📊 No faces or fallback mode, using basic enhancement")
             success = enhance_image_simple(image_path, output_path)
+            if success:
+                basic_processing_count += 1
         
         if success:
             successful += 1
@@ -173,14 +231,25 @@ def process_batch(input_dir, output_dir, use_ad2cn=True):
         else:
             print(f"❌ Failed to process: {image_path}")
     
+    # Final summary
     print(f"\n🎉 Processing complete! {successful}/{len(image_files)} images processed successfully")
     print(f"📁 Enhanced images saved to: {output_dir}")
+    print(f"\n📊 Processing Statistics:")
+    print(f"  Basic enhancement (2+ faces): {basic_processing_count} images")
+    print(f"  AD2CN Plus (1 face): {ad2cn_processing_count} images")
+    print(f"  Total successful: {successful} images")
+
+def process_batch(input_dir, output_dir, use_ad2cn=True):
+    """Legacy batch processing - kept for compatibility"""
+    print("⚠ Using legacy processing method. Consider using --smart flag for better results.")
+    process_batch_smart(input_dir, output_dir, use_ad2cn)
 
 def main():
-    parser = argparse.ArgumentParser(description="Simple image enhancement with ADetailer 2CN Plus")
+    parser = argparse.ArgumentParser(description="Smart image enhancement with intelligent fallback logic")
     parser.add_argument("--input-dir", default="input", help="Input directory")
     parser.add_argument("--output-dir", default="output", help="Output directory")
     parser.add_argument("--use-ad2cn", action="store_true", help="Use ADetailer 2CN Plus")
+    parser.add_argument("--smart", action="store_true", help="Use smart processing logic (recommended)")
     
     args = parser.parse_args()
     
@@ -191,8 +260,11 @@ def main():
     
     os.makedirs(args.output_dir, exist_ok=True)
     
-    # Process images
-    process_batch(args.input_dir, args.output_dir, args.use_ad2cn)
+    # Process images with smart logic
+    if args.smart:
+        process_batch_smart(args.input_dir, args.output_dir, args.use_ad2cn)
+    else:
+        process_batch(args.input_dir, args.output_dir, args.use_ad2cn)
 
 if __name__ == "__main__":
     main()
