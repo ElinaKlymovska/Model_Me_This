@@ -36,6 +36,13 @@
 - Показує використання ресурсів
 - Відстежує процес обробки
 
+### `models_auto.py`
+**Автоматичне завантаження моделей**
+- Завантажує моделі з CivitAI
+- Використовує конфігурацію з config/models.yaml
+- Автоматично створює директорії для моделей
+- Підтримує Stable Diffusion та ControlNet моделі
+
 ## 🚀 Використання
 
 ### Всі скрипти
@@ -50,10 +57,21 @@
 
 ### Через Makefile
 ```bash
-make deploy      # deploy_vast.sh
-make upload      # upload_images.sh
-make download    # download_results.sh
-make monitor     # monitor.sh
+make deploy          # deploy_vast.sh
+make upload          # upload_images.sh
+make download        # download_results.sh
+make monitor         # monitor.sh
+make download-models # models_auto.py
+```
+
+### Завантаження моделей
+```bash
+# Через Makefile
+make download-models
+
+# Або безпосередньо
+cd scripts
+python models_auto.py
 ```
 
 ## 🔧 Налаштування

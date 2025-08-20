@@ -11,6 +11,7 @@ help: ## Show this help message
 	@echo "  upload          Upload images to vast.ai"
 	@echo "  download        Download results from vast.ai"
 	@echo "  monitor         Monitor vast.ai instance"
+	@echo "  download-models Download AI models from CivitAI"
 	@echo ""
 	@echo "🏗️  Local Development:"
 	@echo "  build           Build Docker image"
@@ -39,6 +40,10 @@ download: ## Download results from vast.ai
 monitor: ## Monitor vast.ai instance
 	@echo "📊 Monitoring vast.ai instance..."
 	./scripts/monitor.sh
+
+download-models: ## Download AI models from CivitAI
+	@echo "🤖 Downloading AI models from CivitAI..."
+	cd scripts && python models_auto.py
 
 build: ## Build Docker image
 	@echo "🏗️  Building Docker image..."

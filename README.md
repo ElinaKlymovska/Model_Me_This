@@ -30,12 +30,13 @@ ADetailer_2CN/
 │   ├── Dockerfile              # Container configuration
 │   ├── docker-compose.yml      # Docker orchestration
 │   └── README.md               # Docker documentation
-├── scripts/                    # Bash scripts for project management
+├── scripts/                    # Scripts for project management
 │   ├── bootstrap.sh           # Setup and configuration
 │   ├── deploy_vast.sh         # vast.ai deployment
 │   ├── upload_images.sh       # Image upload
 │   ├── download_results.sh    # Results download
 │   ├── monitor.sh             # Instance monitoring
+│   ├── models_auto.py         # AI models downloader
 │   └── README.md              # Scripts documentation
 ├── config/                     # Configuration files
 │   ├── config.yaml            # Main configuration
@@ -208,14 +209,26 @@ docker-compose up --build
 ### **Використання скриптів**
 ```bash
 # Через Makefile (рекомендовано)
-make deploy      # deploy_vast.sh
-make upload      # upload_images.sh
-make download    # download_results.sh
-make monitor     # monitor.sh
+make deploy          # deploy_vast.sh
+make upload          # upload_images.sh
+make download        # download_results.sh
+make monitor         # monitor.sh
+make download-models # models_auto.py
 
 # Або безпосередньо
 ./scripts/bootstrap.sh
 ./scripts/deploy_vast.sh
+./scripts/models_auto.py
+```
+
+### **Завантаження AI моделей**
+```bash
+# Автоматичне завантаження всіх моделей
+make download-models
+
+# Або безпосередньо
+cd scripts
+python models_auto.py
 ```
 
 ## ⚙️ Configuration Management

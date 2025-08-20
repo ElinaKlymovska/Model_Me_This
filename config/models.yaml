@@ -61,10 +61,10 @@ adetailer:
 
 # Model download settings
 download:
-  civitai_api_key: ""  # Set your CivitAI API key here
-  timeout: 1800        # 30 minutes
+  civitai_api_key: "0be8555ec950c991b4e02d1957333f05"
+  timeout: 1800        
   retry_attempts: 3
-  chunk_size: 1048576  # 1MB chunks
+  chunk_size: 1048576 
   
 # Model paths
 paths:
