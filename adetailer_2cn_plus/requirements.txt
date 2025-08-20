@@ -1,0 +1,40 @@
+# ADetailer 2CN Plus - Production Dependencies
+# Core dependencies
+numpy>=1.24.0
+opencv-python>=4.8.0
+pillow>=10.0.0
+pydantic>=2.0.0
+loguru>=0.7.0
+tqdm>=4.65.0
+pyyaml>=6.0
+albumentations>=1.3.0
+
+# ML/CV frameworks
+onnxruntime-gpu>=1.15.0
+insightface>=0.7.3
+facenet-pytorch>=0.2.1
+
+# Visualization
+matplotlib>=3.7.0
+
+# Optional: PyTorch (if not using ONNX)
+# torch>=2.0.0
+# torchvision>=0.15.0
+
+# Optional: TensorFlow (alternative backend)
+# tensorflow>=2.13.0
+# tensorflow-gpu>=2.13.0
+
+# Optional: Additional detectors
+# ultralytics>=8.0.0  # YOLOv8
+# transformers>=4.30.0  # DETR
+
+# Development dependencies (uncomment for development)
+# pytest>=7.4.0
+# pytest-cov>=4.1.0
+# black>=23.0.0
+# ruff>=0.1.0
+# mypy>=1.5.0
+# pre-commit>=3.3.0
+# safety>=2.3.0
+# bandit>=1.7.0

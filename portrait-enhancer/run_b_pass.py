@@ -8,27 +8,27 @@ import requests
 from PIL import Image
 
 
-def load_cfg(path):
+def load_config(path):
     with open(path, "r", encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 
-def img_to_b64(path):
+def image_to_base64(path):
     with Image.open(path) as im:
         buf = io.BytesIO()
         im.save(buf, format="PNG")
         return base64.b64encode(buf.getvalue()).decode("utf-8")
 
 
-def run_a1111(cfg, a_pass_image, face_mask_path, contour_map_path, out_path):
+def create_a1111_payload(cfg, a_pass_image, face_mask_path, contour_map_path):
     ep = cfg["general"]["a1111_endpoint"]
     bp = cfg["b_pass"]
 
-    init_b64 = img_to_b64(a_pass_image)
-    mask_b64 = img_to_b64(face_mask_path)
-    contour_b64 = img_to_b64(contour_map_path) if os.path.exists(contour_map_path) else init_b64
+    init_b64 = image_to_base64(a_pass_image)
+    mask_b64 = image_to_base64(face_mask_path)
+    contour_b64 = image_to_base64(contour_map_path) if os.path.exists(contour_map_path) else init_b64
 
-    # Safe dimensions (<= 768 and multiples of 64)
+    # Calculate safe dimensions
     try:
         with Image.open(a_pass_image) as size_probe:
             src_w, src_h = size_probe.size
@@ -81,7 +81,7 @@ def run_a1111(cfg, a_pass_image, face_mask_path, contour_map_path, out_path):
             "ad_use_inpaint": True,
             "ad_use_next_frame": False,
             "ad_prompt": bp.get("ad_prompt", ""),
-            "ad_negative_prompt": bp.get("ad_negative", "")
+            "ad_negative": bp.get("ad_negative", "")
         })
 
     if bp.get("use_adetailer2", False):
@@ -96,7 +96,7 @@ def run_a1111(cfg, a_pass_image, face_mask_path, contour_map_path, out_path):
             "ad_use_inpaint": True,
             "ad_use_next_frame": False,
             "ad_prompt": bp.get("ad2_prompt", bp.get("ad_prompt", "")),
-            "ad_negative_prompt": bp.get("ad2_negative", bp.get("ad_negative", ""))
+            "ad_negative": bp.get("ad2_negative", bp.get("ad_negative", ""))
         })
 
     if ad_args:
@@ -137,6 +137,13 @@ def run_a1111(cfg, a_pass_image, face_mask_path, contour_map_path, out_path):
     if cn_args:
         payload["alwayson_scripts"]["ControlNet"] = {"args": cn_args}
 
+    return payload
+
+
+def run_a1111_inpainting(cfg, a_pass_image, face_mask_path, contour_map_path, out_path):
+    payload = create_a1111_payload(cfg, a_pass_image, face_mask_path, contour_map_path)
+    ep = cfg["general"]["a1111_endpoint"]
+
     r = requests.post(f"{ep}/sdapi/v1/img2img", json=payload, timeout=900)
     if r.status_code != 200:
         raise RuntimeError(f"img2img failed HTTP {r.status_code}: {r.text[:1000]}")
@@ -158,7 +165,7 @@ def main():
     ap.add_argument("--output", default="output")
     args = ap.parse_args()
 
-    cfg = load_cfg(args.config)
+    cfg = load_config(args.config)
     a_pass_image = os.path.join(args.workdir, "a_pass", "base_enhanced.png")
     face_mask_path = os.path.join(args.workdir, "masks", "face_mask.png")
     contour_map_path = os.path.join(args.workdir, "a_pass", "contour_map.png")
@@ -167,7 +174,7 @@ def main():
     input_name = os.path.basename(os.path.normpath(args.workdir)) or "final"
     out_path = os.path.join(args.output, f"{input_name}.png")
 
-    run_a1111(cfg, a_pass_image, face_mask_path, contour_map_path, out_path)
+    run_a1111_inpainting(cfg, a_pass_image, face_mask_path, contour_map_path, out_path)
 
 
 if __name__ == "__main__":

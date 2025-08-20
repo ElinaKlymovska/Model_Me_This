@@ -3,30 +3,30 @@ set -euo pipefail
 if [ -f .env ]; then set -a; source .env; set +a; fi
 
 A1111_DIR="/workspace/stable-diffusion-webui"
-PRESET_DIR="/workspace/runpod-pack/preset-contour"
+PRESET_DIR="/workspace/portrait-enhancer"
 PORT="${PORT:-7860}"
 
-echo "[*] Install base tools"
-apt-get update -y && apt-get install -y git curl tmux unzip python3 python3-venv python3-pip
+echo "[*] Installing base tools"
+apt-get update -y && apt-get install -y git curl tmux unzip python3 python3-venv python3-pip wget
 ln -sf $(command -v python3) /usr/bin/python || true
 
-echo "[*] Clone A1111"
+echo "[*] Cloning A1111"
 if [ ! -d "$A1111_DIR" ]; then
   git clone https://github.com/AUTOMATIC1111/stable-diffusion-webui "$A1111_DIR"
 fi
 
-echo "[*] Extensions: ControlNet + ADetailer"
+echo "[*] Installing extensions"
 mkdir -p "$A1111_DIR/extensions"
 [ -d "$A1111_DIR/extensions/sd-webui-controlnet" ] || git clone https://github.com/Mikubill/sd-webui-controlnet "$A1111_DIR/extensions/sd-webui-controlnet"
 [ -d "$A1111_DIR/extensions/adetailer" ] || git clone https://github.com/Bing-su/adetailer "$A1111_DIR/extensions/adetailer"
 
-echo "[*] Model directories"
+echo "[*] Creating model directories"
 mkdir -p "$A1111_DIR/models/Stable-diffusion" "$A1111_DIR/models/ControlNet"
 
-echo "[*] Auto-download SDXL + ControlNets"
-python /workspace/runpod-pack/models_auto.py || true
+echo "[*] Auto-downloading models"
+python /workspace/models_auto.py || true
 
-# Pick newest filenames if variables not set
+# Auto-detect model names
 if [ -z "${MODEL_CKPT_NAME:-}" ]; then
   MODEL_CKPT_NAME=$(ls -t "$A1111_DIR/models/Stable-diffusion"/*.safetensors 2>/dev/null | head -n1 | xargs -r -n1 basename || true)
 fi
@@ -39,21 +39,33 @@ if [ -z "${CONTROLNET2_FILE:-}" ]; then
   CONTROLNET2_FILE=$(basename "$CONTROLNET2_FILE" 2>/dev/null || echo "")
 fi
 
-echo "[*] Launch A1111 headless"
+echo "[*] Starting A1111"
 if tmux has-session -t webui 2>/dev/null; then
   echo " - already running"
 else
   tmux new -d -s webui "cd '$A1111_DIR' && python launch.py --api --listen --port $PORT --xformers --nowebui"
 fi
 until curl -s "http://127.0.0.1:$PORT/sdapi/v1/sd-models" >/dev/null; do sleep 2; done
-echo " - API up"
+echo " - API ready"
 
-echo "[*] Preset venv & dependencies"
+echo "[*] Setting up portrait enhancer"
 cd "$PRESET_DIR"
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 
-echo "[*] Patch config with endpoints + discovered model names"
+echo "[*] Setting up ADetailer 2CN Plus"
+cd "$PRESET_DIR/.."
+if [ -d "adetailer_2cn_plus" ]; then
+    cd adetailer_2cn_plus
+    source ../portrait-enhancer/.venv/bin/activate
+    pip install -r requirements.txt
+    echo "✓ ADetailer 2CN Plus dependencies installed"
+else
+    echo "⚠ ADetailer 2CN Plus directory not found"
+fi
+cd "$PRESET_DIR"
+
+echo "[*] Updating configuration"
 sed -i 's/backend:.*/backend: "a1111"/' config.yaml
 sed -i 's|a1111_endpoint:.*|a1111_endpoint: "http://127.0.0.1:'"$PORT"'"|' config.yaml
 if [ -n "${MODEL_CKPT_NAME:-}" ]; then
@@ -69,7 +81,8 @@ if [ -n "${CONTROLNET2_FILE:-}" ]; then
 fi
 sed -i 's/use_adetailer: .*$/use_adetailer: true/' config.yaml
 
-echo "[*] Run batch"
+echo "[*] Running portrait enhancement"
 python batch.py
 
-echo "[*] Done -> preset-contour/output"
+echo "[*] Complete -> portrait-enhancer/output"
+echo "[*] Vast.ai instance ready!"

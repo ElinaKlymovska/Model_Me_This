@@ -7,7 +7,7 @@ import yaml
 import glob
 
 
-def load_cfg(path):
+def load_config(path):
     with open(path, "r", encoding="utf-8") as f:
         return yaml.safe_load(f)
 
@@ -16,13 +16,14 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="config.yaml")
     args = ap.parse_args()
-    cfg = load_cfg(args.config)
+    cfg = load_config(args.config)
 
     input_dir = cfg["io"]["input_dir"]
     work_dir = cfg["io"]["work_dir"]
     out_dir = cfg["io"]["output_dir"]
     os.makedirs(out_dir, exist_ok=True)
 
+    # Find input images
     imgs = []
     for ext in ("*.png", "*.jpg", "*.jpeg", "*.webp"):
         imgs += glob.glob(os.path.join(input_dir, ext))
@@ -32,6 +33,7 @@ def main():
         print(f"No images in {input_dir}")
         return
 
+    # Process each image
     for i, img in enumerate(imgs, 1):
         print(f"\n=== [{i}/{len(imgs)}] {img} ===")
         name = os.path.splitext(os.path.basename(img))[0]

@@ -19,7 +19,7 @@ def civ_get(path, params=None, stream=False):
     return r
 
 
-def pick(ver):
+def pick_best_file(ver):
     files = ver.get("files") or []
     
     def score(f):
@@ -43,20 +43,21 @@ def pick(ver):
 
 
 def search_and_download(query, model_type, out_dir):
-    print(f"[*] Search {model_type}: {query}")
+    print(f"[*] Searching {model_type}: {query}")
     items = civ_get("/models", params={"query": query, "types": model_type, "limit": 10}).json().get("items") or []
     
     if not items:
         raise RuntimeError("No results")
     
+    # Sort by download count and version ID
     items.sort(key=lambda it: (it.get("stats", {}).get("downloadCount", 0), it.get("modelVersions", [{}])[0].get("id", 0)), reverse=True)
     ver = items[0].get("modelVersions", [{}])[0]
-    f = pick(ver)
+    f = pick_best_file(ver)
     url = f.get("downloadUrl")
     name = f.get("name")
     
     if not url:
-        raise RuntimeError("no downloadUrl")
+        raise RuntimeError("No download URL")
     
     os.makedirs(out_dir, exist_ok=True)
     out = os.path.join(out_dir, name)
