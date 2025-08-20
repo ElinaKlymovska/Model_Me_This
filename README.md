@@ -30,10 +30,13 @@ ADetailer_2CN/
 │   ├── Dockerfile              # Container configuration
 │   ├── docker-compose.yml      # Docker orchestration
 │   └── README.md               # Docker documentation
-├── deploy_vast.sh              # vast.ai deployment script
-├── upload_images.sh            # Image upload script
-├── download_results.sh         # Results download script
-├── monitor.sh                  # Instance monitoring script
+├── scripts/                    # Bash scripts for project management
+│   ├── bootstrap.sh           # Setup and configuration
+│   ├── deploy_vast.sh         # vast.ai deployment
+│   ├── upload_images.sh       # Image upload
+│   ├── download_results.sh    # Results download
+│   ├── monitor.sh             # Instance monitoring
+│   └── README.md              # Scripts documentation
 ├── Makefile                    # Simplified command management
 └── README.md                   # This file
 ```
@@ -181,6 +184,30 @@ make run
 # Або безпосередньо
 cd docker
 docker-compose up --build
+```
+
+## 📜 Scripts Organization
+
+Всі bash скрипти організовані в папці `scripts/`:
+
+- **`scripts/bootstrap.sh`** - Основна установка та налаштування
+- **`scripts/deploy_vast.sh`** - Розгортання на vast.ai
+- **`scripts/upload_images.sh`** - Завантаження зображень
+- **`scripts/download_results.sh`** - Завантаження результатів
+- **`scripts/monitor.sh`** - Моніторинг інстансу
+- **`scripts/README.md`** - Детальна документація скриптів
+
+### **Використання скриптів**
+```bash
+# Через Makefile (рекомендовано)
+make deploy      # deploy_vast.sh
+make upload      # upload_images.sh
+make download    # download_results.sh
+make monitor     # monitor.sh
+
+# Або безпосередньо
+./scripts/bootstrap.sh
+./scripts/deploy_vast.sh
 ```
 
 ## 🚀 vast.ai Deployment

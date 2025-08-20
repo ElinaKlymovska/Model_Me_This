@@ -25,19 +25,19 @@ help: ## Show this help message
 
 deploy: ## Deploy project to vast.ai
 	@echo "🚀 Deploying to vast.ai..."
-	./deploy_vast.sh
+	./scripts/deploy_vast.sh
 
 upload: ## Upload images to vast.ai
 	@echo "📤 Uploading images to vast.ai..."
-	./upload_images.sh
+	./scripts/upload_images.sh
 
 download: ## Download results from vast.ai
 	@echo "📥 Downloading results from vast.ai..."
-	./download_results.sh
+	./scripts/download_results.sh
 
 monitor: ## Monitor vast.ai instance
 	@echo "📊 Monitoring vast.ai instance..."
-	./monitor.sh
+	./scripts/monitor.sh
 
 build: ## Build Docker image
 	@echo "🏗️  Building Docker image..."
