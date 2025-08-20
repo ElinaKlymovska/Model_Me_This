@@ -1,0 +1,78 @@
+# Portrait Enhancement Pipeline Configuration
+# Central configuration file for the entire project
+
+# General settings
+general:
+  project_name: "Portrait Enhancement Pipeline"
+  version: "2.0.0"
+  debug: false
+  log_level: "INFO"
+
+# Stable Diffusion WebUI settings
+webui:
+  host: "127.0.0.1"
+  port: 7860
+  base_url: "http://127.0.0.1:7860"
+  timeout: 300
+
+# ADetailer 2CN Plus settings
+adetailer_2cn:
+  enabled: true
+  detectors:
+    - "blazeface"    # Fast detection
+    - "retinaface"   # Accurate detection
+    - "mtcnn"        # Balanced detection
+  confidence_threshold: 0.5
+  max_faces: 10
+
+# Processing settings
+processing:
+  input_formats: ["jpg", "jpeg", "png", "webp"]
+  output_format: "png"
+  quality: 95
+  max_image_size: 2048
+  
+# Face detection settings
+face_detection:
+  min_face_size: 20
+  scale_factor: 1.1
+  min_neighbors: 3
+  
+# Enhancement settings
+enhancement:
+  denoising_strength: 0.4
+  cfg_scale: 7.0
+  steps: 20
+  sampler: "DPM++ 2M Karras"
+  
+# ControlNet settings
+controlnet:
+  enabled: true
+  models:
+    - "softedge_sdxl_dexined"
+    - "canny_sdxl"
+  weight: 1.0
+  guidance_start: 0.0
+  guidance_end: 1.0
+
+# vast.ai deployment settings
+vast_ai:
+  ssh_port: 18826
+  ssh_host: "ssh4.vast.ai"
+  ssh_user: "root"
+  workspace_path: "/workspace"
+  
+# Docker settings
+docker:
+  image_name: "portrait-enhancer"
+  container_name: "portrait-enhancer"
+  gpu_enabled: true
+  memory_limit: "8g"
+  
+# Logging settings
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "logs/portrait_enhancer.log"
+  max_size: "10MB"
+  backup_count: 5

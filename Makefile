@@ -19,6 +19,7 @@ help: ## Show this help message
 	@echo ""
 	@echo "🔗 Testing:"
 	@echo "  test-connection Test SSH connection to vast.ai"
+	@echo "  test            Run all tests"
 	@echo ""
 	@echo "📚 Help:"
 	@echo "  help            Show this help message"
@@ -55,3 +56,7 @@ clean: ## Clean up Docker resources
 test-connection: ## Test SSH connection to vast.ai
 	@echo "🔗 Testing SSH connection to vast.ai..."
 	ssh -p 18826 -o ConnectTimeout=10 root@ssh4.vast.ai 'echo "✅ З'\''єднання успішне!"'
+
+test: ## Run all tests
+	@echo "🧪 Running tests..."
+	python -m pytest tests/ -v

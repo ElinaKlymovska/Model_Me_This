@@ -37,6 +37,14 @@ ADetailer_2CN/
 │   ├── download_results.sh    # Results download
 │   ├── monitor.sh             # Instance monitoring
 │   └── README.md              # Scripts documentation
+├── config/                     # Configuration files
+│   ├── config.yaml            # Main configuration
+│   ├── models.yaml            # Models configuration
+│   └── README.md              # Configuration documentation
+├── tests/                      # Test suite
+│   ├── test_config.py         # Configuration tests
+│   ├── test_basic.py          # Basic functionality tests
+│   └── README.md              # Testing documentation
 ├── Makefile                    # Simplified command management
 └── README.md                   # This file
 ```
@@ -208,6 +216,47 @@ make monitor     # monitor.sh
 # Або безпосередньо
 ./scripts/bootstrap.sh
 ./scripts/deploy_vast.sh
+```
+
+## ⚙️ Configuration Management
+
+Всі конфігураційні файли організовані в папці `config/`:
+
+- **`config/config.yaml`** - Основна конфігурація проекту
+- **`config/models.yaml`** - Конфігурація моделей
+- **`config/README.md`** - Детальна документація конфігурації
+
+### **Використання конфігурації**
+```python
+import yaml
+
+# Завантаження конфігурації
+with open('config/config.yaml', 'r') as f:
+    config = yaml.safe_load(f)
+
+# Отримання значень
+webui_host = config['webui']['host']
+webui_port = config['webui']['port']
+```
+
+## 🧪 Testing
+
+Тестова підмножина організована в папці `tests/`:
+
+- **`tests/test_config.py`** - Тести конфігураційних файлів
+- **`tests/test_basic.py`** - Базові тести функціональності
+- **`tests/README.md`** - Детальна документація тестування
+
+### **Запуск тестів**
+```bash
+# Всі тести
+make test
+
+# Конкретний тест
+python tests/test_config.py
+
+# Через pytest
+python -m pytest tests/ -v
 ```
 
 ## 🚀 vast.ai Deployment
