@@ -1,0 +1,499 @@
+{
+  "directory": "data/samples/Massy",
+  "summary": {
+    "total_images": 12,
+    "successful_detections": 12,
+    "failed_detections": 0,
+    "total_faces_detected": 12,
+    "images_with_faces": 12,
+    "bbox_quality_stats": {
+      "total_bboxes": 12,
+      "good_bboxes": 12,
+      "avg_quality_score": 100.0,
+      "quality_percentage": 100.0
+    },
+    "face_detection_rate": 100.0
+  },
+  "detailed_results": [
+    {
+      "image_path": "data/samples/Massy/23ae867f693345ac9fa3914ba93e6271.webp",
+      "image_shape": [
+        1216,
+        832,
+        3
+      ],
+      "num_faces": 1,
+      "detections": [
+        {
+          "id": 0,
+          "bbox": [
+            292,
+            182,
+            541,
+            480
+          ],
+          "confidence": 0.5,
+          "detector": "manual_estimation",
+          "bbox_metrics": {
+            "width": 249,
+            "height": 298,
+            "area": 74202,
+            "aspect_ratio": 0.8355704697986577,
+            "area_percentage": 7.334300670546559,
+            "in_bounds": true,
+            "reasonable_size": true,
+            "good_aspect_ratio": true,
+            "quality_score": 100,
+            "is_good_bbox": true
+          }
+        }
+      ],
+      "bbox_quality": {
+        "good_bboxes": 1,
+        "total_bboxes": 1,
+        "avg_quality_score": 100.0,
+        "quality_percentage": 100.0
+      }
+    },
+    {
+      "image_path": "data/samples/Massy/2feb7348534b4389ae915fc885762edf.webp",
+      "image_shape": [
+        1216,
+        832,
+        3
+      ],
+      "num_faces": 1,
+      "detections": [
+        {
+          "id": 0,
+          "bbox": [
+            292,
+            182,
+            541,
+            480
+          ],
+          "confidence": 0.5,
+          "detector": "manual_estimation",
+          "bbox_metrics": {
+            "width": 249,
+            "height": 298,
+            "area": 74202,
+            "aspect_ratio": 0.8355704697986577,
+            "area_percentage": 7.334300670546559,
+            "in_bounds": true,
+            "reasonable_size": true,
+            "good_aspect_ratio": true,
+            "quality_score": 100,
+            "is_good_bbox": true
+          }
+        }
+      ],
+      "bbox_quality": {
+        "good_bboxes": 1,
+        "total_bboxes": 1,
+        "avg_quality_score": 100.0,
+        "quality_percentage": 100.0
+      }
+    },
+    {
+      "image_path": "data/samples/Massy/a4cec78eb5e84131b1b89d3bc099714b.webp",
+      "image_shape": [
+        1216,
+        832,
+        3
+      ],
+      "num_faces": 1,
+      "detections": [
+        {
+          "id": 0,
+          "bbox": [
+            292,
+            182,
+            541,
+            480
+          ],
+          "confidence": 0.5,
+          "detector": "manual_estimation",
+          "bbox_metrics": {
+            "width": 249,
+            "height": 298,
+            "area": 74202,
+            "aspect_ratio": 0.8355704697986577,
+            "area_percentage": 7.334300670546559,
+            "in_bounds": true,
+            "reasonable_size": true,
+            "good_aspect_ratio": true,
+            "quality_score": 100,
+            "is_good_bbox": true
+          }
+        }
+      ],
+      "bbox_quality": {
+        "good_bboxes": 1,
+        "total_bboxes": 1,
+        "avg_quality_score": 100.0,
+        "quality_percentage": 100.0
+      }
+    },
+    {
+      "image_path": "data/samples/Massy/adbfe074ada34966b8e68609ecd52f3b.webp",
+      "image_shape": [
+        1216,
+        832,
+        3
+      ],
+      "num_faces": 1,
+      "detections": [
+        {
+          "id": 0,
+          "bbox": [
+            292,
+            182,
+            541,
+            480
+          ],
+          "confidence": 0.5,
+          "detector": "manual_estimation",
+          "bbox_metrics": {
+            "width": 249,
+            "height": 298,
+            "area": 74202,
+            "aspect_ratio": 0.8355704697986577,
+            "area_percentage": 7.334300670546559,
+            "in_bounds": true,
+            "reasonable_size": true,
+            "good_aspect_ratio": true,
+            "quality_score": 100,
+            "is_good_bbox": true
+          }
+        }
+      ],
+      "bbox_quality": {
+        "good_bboxes": 1,
+        "total_bboxes": 1,
+        "avg_quality_score": 100.0,
+        "quality_percentage": 100.0
+      }
+    },
+    {
+      "image_path": "data/samples/Massy/adfc70711f244e7baf08c464d7d24e3c.webp",
+      "image_shape": [
+        1216,
+        832,
+        3
+      ],
+      "num_faces": 1,
+      "detections": [
+        {
+          "id": 0,
+          "bbox": [
+            292,
+            182,
+            541,
+            480
+          ],
+          "confidence": 0.5,
+          "detector": "manual_estimation",
+          "bbox_metrics": {
+            "width": 249,
+            "height": 298,
+            "area": 74202,
+            "aspect_ratio": 0.8355704697986577,
+            "area_percentage": 7.334300670546559,
+            "in_bounds": true,
+            "reasonable_size": true,
+            "good_aspect_ratio": true,
+            "quality_score": 100,
+            "is_good_bbox": true
+          }
+        }
+      ],
+      "bbox_quality": {
+        "good_bboxes": 1,
+        "total_bboxes": 1,
+        "avg_quality_score": 100.0,
+        "quality_percentage": 100.0
+      }
+    },
+    {
+      "image_path": "data/samples/Massy/bfe1c3acf3fc43768537905cb454d5e1.webp",
+      "image_shape": [
+        1216,
+        832,
+        3
+      ],
+      "num_faces": 1,
+      "detections": [
+        {
+          "id": 0,
+          "bbox": [
+            292,
+            182,
+            541,
+            480
+          ],
+          "confidence": 0.5,
+          "detector": "manual_estimation",
+          "bbox_metrics": {
+            "width": 249,
+            "height": 298,
+            "area": 74202,
+            "aspect_ratio": 0.8355704697986577,
+            "area_percentage": 7.334300670546559,
+            "in_bounds": true,
+            "reasonable_size": true,
+            "good_aspect_ratio": true,
+            "quality_score": 100,
+            "is_good_bbox": true
+          }
+        }
+      ],
+      "bbox_quality": {
+        "good_bboxes": 1,
+        "total_bboxes": 1,
+        "avg_quality_score": 100.0,
+        "quality_percentage": 100.0
+      }
+    },
+    {
+      "image_path": "data/samples/Massy/c30787ff2d8d4dc7ae1f17ded71889b3.webp",
+      "image_shape": [
+        1216,
+        832,
+        3
+      ],
+      "num_faces": 1,
+      "detections": [
+        {
+          "id": 0,
+          "bbox": [
+            292,
+            182,
+            541,
+            480
+          ],
+          "confidence": 0.5,
+          "detector": "manual_estimation",
+          "bbox_metrics": {
+            "width": 249,
+            "height": 298,
+            "area": 74202,
+            "aspect_ratio": 0.8355704697986577,
+            "area_percentage": 7.334300670546559,
+            "in_bounds": true,
+            "reasonable_size": true,
+            "good_aspect_ratio": true,
+            "quality_score": 100,
+            "is_good_bbox": true
+          }
+        }
+      ],
+      "bbox_quality": {
+        "good_bboxes": 1,
+        "total_bboxes": 1,
+        "avg_quality_score": 100.0,
+        "quality_percentage": 100.0
+      }
+    },
+    {
+      "image_path": "data/samples/Massy/e1dad67f3409479cac1d3d0953990071.webp",
+      "image_shape": [
+        1216,
+        832,
+        3
+      ],
+      "num_faces": 1,
+      "detections": [
+        {
+          "id": 0,
+          "bbox": [
+            292,
+            182,
+            541,
+            480
+          ],
+          "confidence": 0.5,
+          "detector": "manual_estimation",
+          "bbox_metrics": {
+            "width": 249,
+            "height": 298,
+            "area": 74202,
+            "aspect_ratio": 0.8355704697986577,
+            "area_percentage": 7.334300670546559,
+            "in_bounds": true,
+            "reasonable_size": true,
+            "good_aspect_ratio": true,
+            "quality_score": 100,
+            "is_good_bbox": true
+          }
+        }
+      ],
+      "bbox_quality": {
+        "good_bboxes": 1,
+        "total_bboxes": 1,
+        "avg_quality_score": 100.0,
+        "quality_percentage": 100.0
+      }
+    },
+    {
+      "image_path": "data/samples/Massy/e69cd3f2796f481aa3899307d4ffe50a.webp",
+      "image_shape": [
+        1216,
+        832,
+        3
+      ],
+      "num_faces": 1,
+      "detections": [
+        {
+          "id": 0,
+          "bbox": [
+            292,
+            182,
+            541,
+            480
+          ],
+          "confidence": 0.5,
+          "detector": "manual_estimation",
+          "bbox_metrics": {
+            "width": 249,
+            "height": 298,
+            "area": 74202,
+            "aspect_ratio": 0.8355704697986577,
+            "area_percentage": 7.334300670546559,
+            "in_bounds": true,
+            "reasonable_size": true,
+            "good_aspect_ratio": true,
+            "quality_score": 100,
+            "is_good_bbox": true
+          }
+        }
+      ],
+      "bbox_quality": {
+        "good_bboxes": 1,
+        "total_bboxes": 1,
+        "avg_quality_score": 100.0,
+        "quality_percentage": 100.0
+      }
+    },
+    {
+      "image_path": "data/samples/Massy/e8bec9dd883c4232b6a7c1b572851100.webp",
+      "image_shape": [
+        1216,
+        832,
+        3
+      ],
+      "num_faces": 1,
+      "detections": [
+        {
+          "id": 0,
+          "bbox": [
+            292,
+            182,
+            541,
+            480
+          ],
+          "confidence": 0.5,
+          "detector": "manual_estimation",
+          "bbox_metrics": {
+            "width": 249,
+            "height": 298,
+            "area": 74202,
+            "aspect_ratio": 0.8355704697986577,
+            "area_percentage": 7.334300670546559,
+            "in_bounds": true,
+            "reasonable_size": true,
+            "good_aspect_ratio": true,
+            "quality_score": 100,
+            "is_good_bbox": true
+          }
+        }
+      ],
+      "bbox_quality": {
+        "good_bboxes": 1,
+        "total_bboxes": 1,
+        "avg_quality_score": 100.0,
+        "quality_percentage": 100.0
+      }
+    },
+    {
+      "image_path": "data/samples/Massy/f2dd95c5f48b407ba59c0be21f70a016.webp",
+      "image_shape": [
+        1216,
+        832,
+        3
+      ],
+      "num_faces": 1,
+      "detections": [
+        {
+          "id": 0,
+          "bbox": [
+            292,
+            182,
+            541,
+            480
+          ],
+          "confidence": 0.5,
+          "detector": "manual_estimation",
+          "bbox_metrics": {
+            "width": 249,
+            "height": 298,
+            "area": 74202,
+            "aspect_ratio": 0.8355704697986577,
+            "area_percentage": 7.334300670546559,
+            "in_bounds": true,
+            "reasonable_size": true,
+            "good_aspect_ratio": true,
+            "quality_score": 100,
+            "is_good_bbox": true
+          }
+        }
+      ],
+      "bbox_quality": {
+        "good_bboxes": 1,
+        "total_bboxes": 1,
+        "avg_quality_score": 100.0,
+        "quality_percentage": 100.0
+      }
+    },
+    {
+      "image_path": "data/samples/Massy/f9a2a5bab360420aa0bceeb6a396e720.webp",
+      "image_shape": [
+        1216,
+        832,
+        3
+      ],
+      "num_faces": 1,
+      "detections": [
+        {
+          "id": 0,
+          "bbox": [
+            292,
+            182,
+            541,
+            480
+          ],
+          "confidence": 0.5,
+          "detector": "manual_estimation",
+          "bbox_metrics": {
+            "width": 249,
+            "height": 298,
+            "area": 74202,
+            "aspect_ratio": 0.8355704697986577,
+            "area_percentage": 7.334300670546559,
+            "in_bounds": true,
+            "reasonable_size": true,
+            "good_aspect_ratio": true,
+            "quality_score": 100,
+            "is_good_bbox": true
+          }
+        }
+      ],
+      "bbox_quality": {
+        "good_bboxes": 1,
+        "total_bboxes": 1,
+        "avg_quality_score": 100.0,
+        "quality_percentage": 100.0
+      }
+    }
+  ]
+}

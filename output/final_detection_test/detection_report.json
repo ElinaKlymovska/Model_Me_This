@@ -1,0 +1,522 @@
+{
+  "directory": "data/samples/Massy",
+  "summary": {
+    "total_images": 12,
+    "successful_detections": 12,
+    "failed_detections": 0,
+    "total_faces_detected": 13,
+    "images_with_faces": 12,
+    "bbox_quality_stats": {
+      "total_bboxes": 13,
+      "good_bboxes": 13,
+      "avg_quality_score": 89.58333333333333,
+      "quality_percentage": 100.0
+    },
+    "face_detection_rate": 100.0
+  },
+  "detailed_results": [
+    {
+      "image_path": "data/samples/Massy/23ae867f693345ac9fa3914ba93e6271.webp",
+      "image_shape": [
+        1216,
+        832,
+        3
+      ],
+      "num_faces": 1,
+      "detections": [
+        {
+          "id": 0,
+          "bbox": [
+            "368",
+            "158",
+            "581",
+            "397"
+          ],
+          "confidence": 0.9414478540420532,
+          "detector": "mediapipe",
+          "bbox_metrics": {
+            "width": "213",
+            "height": "239",
+            "area": "50907",
+            "aspect_ratio": 0.891213389121339,
+            "area_percentage": 5.03176793395749,
+            "in_bounds": "True",
+            "reasonable_size": "True",
+            "good_aspect_ratio": "True",
+            "quality_score": 100,
+            "is_good_bbox": true
+          }
+        }
+      ],
+      "bbox_quality": {
+        "good_bboxes": 1,
+        "total_bboxes": 1,
+        "avg_quality_score": 100.0,
+        "quality_percentage": 100.0
+      }
+    },
+    {
+      "image_path": "data/samples/Massy/2feb7348534b4389ae915fc885762edf.webp",
+      "image_shape": [
+        1216,
+        832,
+        3
+      ],
+      "num_faces": 1,
+      "detections": [
+        {
+          "id": 0,
+          "bbox": [
+            "363",
+            "149",
+            "466",
+            "252"
+          ],
+          "confidence": 0.5,
+          "detector": "opencv",
+          "bbox_metrics": {
+            "width": "103",
+            "height": "103",
+            "area": "10609",
+            "aspect_ratio": 1.0,
+            "area_percentage": 1.048618579200405,
+            "in_bounds": "True",
+            "reasonable_size": "True",
+            "good_aspect_ratio": "True",
+            "quality_score": 75,
+            "is_good_bbox": true
+          }
+        }
+      ],
+      "bbox_quality": {
+        "good_bboxes": 1,
+        "total_bboxes": 1,
+        "avg_quality_score": 75.0,
+        "quality_percentage": 100.0
+      }
+    },
+    {
+      "image_path": "data/samples/Massy/a4cec78eb5e84131b1b89d3bc099714b.webp",
+      "image_shape": [
+        1216,
+        832,
+        3
+      ],
+      "num_faces": 1,
+      "detections": [
+        {
+          "id": 0,
+          "bbox": [
+            "257",
+            "138",
+            "570",
+            "494"
+          ],
+          "confidence": 0.9318317770957947,
+          "detector": "mediapipe",
+          "bbox_metrics": {
+            "width": "313",
+            "height": "356",
+            "area": "111428",
+            "aspect_ratio": 0.8792134831460674,
+            "area_percentage": 11.013806300607287,
+            "in_bounds": "True",
+            "reasonable_size": "True",
+            "good_aspect_ratio": "True",
+            "quality_score": 100,
+            "is_good_bbox": true
+          }
+        }
+      ],
+      "bbox_quality": {
+        "good_bboxes": 1,
+        "total_bboxes": 1,
+        "avg_quality_score": 100.0,
+        "quality_percentage": 100.0
+      }
+    },
+    {
+      "image_path": "data/samples/Massy/adbfe074ada34966b8e68609ecd52f3b.webp",
+      "image_shape": [
+        1216,
+        832,
+        3
+      ],
+      "num_faces": 1,
+      "detections": [
+        {
+          "id": 0,
+          "bbox": [
+            "301",
+            "132",
+            "537",
+            "392"
+          ],
+          "confidence": 0.9720922708511353,
+          "detector": "mediapipe",
+          "bbox_metrics": {
+            "width": "236",
+            "height": "260",
+            "area": "61360",
+            "aspect_ratio": 0.9076923076923077,
+            "area_percentage": 6.064967105263158,
+            "in_bounds": "True",
+            "reasonable_size": "True",
+            "good_aspect_ratio": "True",
+            "quality_score": 100,
+            "is_good_bbox": true
+          }
+        }
+      ],
+      "bbox_quality": {
+        "good_bboxes": 1,
+        "total_bboxes": 1,
+        "avg_quality_score": 100.0,
+        "quality_percentage": 100.0
+      }
+    },
+    {
+      "image_path": "data/samples/Massy/adfc70711f244e7baf08c464d7d24e3c.webp",
+      "image_shape": [
+        1216,
+        832,
+        3
+      ],
+      "num_faces": 1,
+      "detections": [
+        {
+          "id": 0,
+          "bbox": [
+            "154",
+            "110",
+            "400",
+            "383"
+          ],
+          "confidence": 0.9679173827171326,
+          "detector": "mediapipe",
+          "bbox_metrics": {
+            "width": "246",
+            "height": "273",
+            "area": "67158",
+            "aspect_ratio": 0.9010989010989011,
+            "area_percentage": 6.638055098684211,
+            "in_bounds": "True",
+            "reasonable_size": "True",
+            "good_aspect_ratio": "True",
+            "quality_score": 100,
+            "is_good_bbox": true
+          }
+        }
+      ],
+      "bbox_quality": {
+        "good_bboxes": 1,
+        "total_bboxes": 1,
+        "avg_quality_score": 100.0,
+        "quality_percentage": 100.0
+      }
+    },
+    {
+      "image_path": "data/samples/Massy/bfe1c3acf3fc43768537905cb454d5e1.webp",
+      "image_shape": [
+        1216,
+        832,
+        3
+      ],
+      "num_faces": 2,
+      "detections": [
+        {
+          "id": 0,
+          "bbox": [
+            "691",
+            "275",
+            "787",
+            "371"
+          ],
+          "confidence": 0.5,
+          "detector": "opencv",
+          "bbox_metrics": {
+            "width": "96",
+            "height": "96",
+            "area": "9216",
+            "aspect_ratio": 1.0,
+            "area_percentage": 0.9109311740890688,
+            "in_bounds": "True",
+            "reasonable_size": "True",
+            "good_aspect_ratio": "True",
+            "quality_score": 75,
+            "is_good_bbox": true
+          }
+        },
+        {
+          "id": 1,
+          "bbox": [
+            "375",
+            "152",
+            "495",
+            "272"
+          ],
+          "confidence": 0.5,
+          "detector": "opencv",
+          "bbox_metrics": {
+            "width": "120",
+            "height": "120",
+            "area": "14400",
+            "aspect_ratio": 1.0,
+            "area_percentage": 1.4233299595141702,
+            "in_bounds": "True",
+            "reasonable_size": "True",
+            "good_aspect_ratio": "True",
+            "quality_score": 75,
+            "is_good_bbox": true
+          }
+        }
+      ],
+      "bbox_quality": {
+        "good_bboxes": 2,
+        "total_bboxes": 2,
+        "avg_quality_score": 75.0,
+        "quality_percentage": 100.0
+      }
+    },
+    {
+      "image_path": "data/samples/Massy/c30787ff2d8d4dc7ae1f17ded71889b3.webp",
+      "image_shape": [
+        1216,
+        832,
+        3
+      ],
+      "num_faces": 1,
+      "detections": [
+        {
+          "id": 0,
+          "bbox": [
+            "321",
+            "132",
+            "526",
+            "366"
+          ],
+          "confidence": 0.861378014087677,
+          "detector": "mediapipe",
+          "bbox_metrics": {
+            "width": "205",
+            "height": "234",
+            "area": "47970",
+            "aspect_ratio": 0.8760683760683761,
+            "area_percentage": 4.741467927631579,
+            "in_bounds": "True",
+            "reasonable_size": "True",
+            "good_aspect_ratio": "True",
+            "quality_score": 75,
+            "is_good_bbox": true
+          }
+        }
+      ],
+      "bbox_quality": {
+        "good_bboxes": 1,
+        "total_bboxes": 1,
+        "avg_quality_score": 75.0,
+        "quality_percentage": 100.0
+      }
+    },
+    {
+      "image_path": "data/samples/Massy/e1dad67f3409479cac1d3d0953990071.webp",
+      "image_shape": [
+        1216,
+        832,
+        3
+      ],
+      "num_faces": 1,
+      "detections": [
+        {
+          "id": 0,
+          "bbox": [
+            "264",
+            "169",
+            "674",
+            "616"
+          ],
+          "confidence": 0.952556312084198,
+          "detector": "mediapipe",
+          "bbox_metrics": {
+            "width": "410",
+            "height": "447",
+            "area": "183270",
+            "aspect_ratio": 0.9172259507829977,
+            "area_percentage": 18.1148390055668,
+            "in_bounds": "True",
+            "reasonable_size": "True",
+            "good_aspect_ratio": "True",
+            "quality_score": 100,
+            "is_good_bbox": true
+          }
+        }
+      ],
+      "bbox_quality": {
+        "good_bboxes": 1,
+        "total_bboxes": 1,
+        "avg_quality_score": 100.0,
+        "quality_percentage": 100.0
+      }
+    },
+    {
+      "image_path": "data/samples/Massy/e69cd3f2796f481aa3899307d4ffe50a.webp",
+      "image_shape": [
+        1216,
+        832,
+        3
+      ],
+      "num_faces": 1,
+      "detections": [
+        {
+          "id": 0,
+          "bbox": [
+            "225",
+            "119",
+            "383",
+            "314"
+          ],
+          "confidence": 0.7204318046569824,
+          "detector": "mediapipe",
+          "bbox_metrics": {
+            "width": "158",
+            "height": "195",
+            "area": "30810",
+            "aspect_ratio": 0.8102564102564103,
+            "area_percentage": 3.0453330592105265,
+            "in_bounds": "True",
+            "reasonable_size": "True",
+            "good_aspect_ratio": "True",
+            "quality_score": 75,
+            "is_good_bbox": true
+          }
+        }
+      ],
+      "bbox_quality": {
+        "good_bboxes": 1,
+        "total_bboxes": 1,
+        "avg_quality_score": 75.0,
+        "quality_percentage": 100.0
+      }
+    },
+    {
+      "image_path": "data/samples/Massy/e8bec9dd883c4232b6a7c1b572851100.webp",
+      "image_shape": [
+        1216,
+        832,
+        3
+      ],
+      "num_faces": 1,
+      "detections": [
+        {
+          "id": 0,
+          "bbox": [
+            "412",
+            "666",
+            "532",
+            "786"
+          ],
+          "confidence": 0.5,
+          "detector": "opencv",
+          "bbox_metrics": {
+            "width": "120",
+            "height": "120",
+            "area": "14400",
+            "aspect_ratio": 1.0,
+            "area_percentage": 1.4233299595141702,
+            "in_bounds": "True",
+            "reasonable_size": "True",
+            "good_aspect_ratio": "True",
+            "quality_score": 75,
+            "is_good_bbox": true
+          }
+        }
+      ],
+      "bbox_quality": {
+        "good_bboxes": 1,
+        "total_bboxes": 1,
+        "avg_quality_score": 75.0,
+        "quality_percentage": 100.0
+      }
+    },
+    {
+      "image_path": "data/samples/Massy/f2dd95c5f48b407ba59c0be21f70a016.webp",
+      "image_shape": [
+        1216,
+        832,
+        3
+      ],
+      "num_faces": 1,
+      "detections": [
+        {
+          "id": 0,
+          "bbox": [
+            "249",
+            "138",
+            "607",
+            "532"
+          ],
+          "confidence": 0.9643334150314331,
+          "detector": "mediapipe",
+          "bbox_metrics": {
+            "width": "358",
+            "height": "394",
+            "area": "141052",
+            "aspect_ratio": 0.9086294416243654,
+            "area_percentage": 13.941912322874494,
+            "in_bounds": "True",
+            "reasonable_size": "True",
+            "good_aspect_ratio": "True",
+            "quality_score": 100,
+            "is_good_bbox": true
+          }
+        }
+      ],
+      "bbox_quality": {
+        "good_bboxes": 1,
+        "total_bboxes": 1,
+        "avg_quality_score": 100.0,
+        "quality_percentage": 100.0
+      }
+    },
+    {
+      "image_path": "data/samples/Massy/f9a2a5bab360420aa0bceeb6a396e720.webp",
+      "image_shape": [
+        1216,
+        832,
+        3
+      ],
+      "num_faces": 1,
+      "detections": [
+        {
+          "id": 0,
+          "bbox": [
+            "243",
+            "109",
+            "464",
+            "361"
+          ],
+          "confidence": 0.9451221227645874,
+          "detector": "mediapipe",
+          "bbox_metrics": {
+            "width": "221",
+            "height": "252",
+            "area": "55692",
+            "aspect_ratio": 0.876984126984127,
+            "area_percentage": 5.504728618421053,
+            "in_bounds": "True",
+            "reasonable_size": "True",
+            "good_aspect_ratio": "True",
+            "quality_score": 100,
+            "is_good_bbox": true
+          }
+        }
+      ],
+      "bbox_quality": {
+        "good_bboxes": 1,
+        "total_bboxes": 1,
+        "avg_quality_score": 100.0,
+        "quality_percentage": 100.0
+      }
+    }
+  ]
+}

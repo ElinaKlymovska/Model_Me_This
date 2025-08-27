@@ -1,83 +1,74 @@
-# ADetailer 2CN Plus Configuration
-# This file contains all configuration options for the face detection pipeline
-# Integrated with existing portrait-enhancer pipeline
-
-# Pipeline configuration
+# ADetailer 2CN Plus - Enhanced Configuration
 pipeline:
-  # Face detector configurations
   detectors:
-    - name: blazeface
-      confidence_threshold: 0.5
-      nms_threshold: 0.3
-      max_faces: 100
-      input_size: 128
-      model_path: null  # Will use default model
-    
-    - name: retinaface
+    - name: mediapipe
       confidence_threshold: 0.7
-      nms_threshold: 0.3
-      max_faces: 50
-      input_size: 640
-      model_path: null  # Will use default model
-    
-    - name: mtcnn
-      confidence_threshold: 0.6
-      nms_threshold: 0.3
-      max_faces: 100
-      min_face_size: 20
-      factor: 0.709
-      thresholds: [0.6, 0.7, 0.7]
-  
-  # Search strategy configuration
-  search:
-    strategy: sliding_window  # Options: sliding_window, multi_scale
-    window_size: 512
-    stride: 256
-    scale_factors: [1.0, 0.75, 0.5, 0.25]
-  
-  # Cascade detection settings
-  enable_cascade: true
-  cascade_order: [blazeface, retinaface, mtcnn]
+      detection_confidence: 0.7
+      model_selection: 0
+      with_landmarks: true
+      max_faces: 5
+    - name: opencv
+      confidence_threshold: 0.3
+      max_faces: 5
+      scale_factor: 1.05
+      min_neighbors: 3
+  enable_fallback: true
+  min_faces_threshold: 1
 
-# A-Pass pipeline configuration (integrated with portrait-enhancer)
-a_pass:
-  enabled: true
-  model_path: null  # Path to A-Pass model (optional)
-  batch_size: 4
-  device: auto  # Options: auto, cpu, cuda
-  workdir: "work"  # Working directory for A-Pass processing
+# A1111 Integration
+a1111_base_url: "http://127.0.0.1:7860"
 
-# B-Pass pipeline configuration (integrated with portrait-enhancer)
-b_pass:
-  enabled: true
-  model_path: null  # Path to B-Pass model (optional)
-  batch_size: 4
-  device: auto  # Options: auto, cpu, cuda
-  workdir: "work"  # Working directory for B-Pass processing
-  output_dir: "output"  # Output directory for final results
-  config_path: "config.yaml"  # Path to portrait-enhancer config
-
-# Input/Output settings
-input_dir: null  # Input directory for batch processing
-output_dir: null  # Output directory for results
-
-# Performance settings
-num_workers: 4
+# Performance
 use_gpu: true
-gpu_memory_fraction: 0.8
+num_workers: 4
 
-# Logging configuration
-log_level: INFO  # Options: DEBUG, INFO, WARNING, ERROR, CRITICAL
-log_file: null  # Log file path (optional)
+# Paths
+input_dir: "data/samples"
+output_dir: "output"
 
-# A1111 integration settings (for B-Pass)
-a1111_base_url: "http://127.0.0.1:7860"  # A1111 base URL
-a1111_api_key: null   # A1111 API key (optional)
+# Logging
+log_level: INFO
 
-# Portrait-enhancer integration settings
-portrait_enhancer:
-  enabled: true
-  auto_detect: true  # Auto-detect portrait-enhancer installation
-  path: "../portrait-enhancer"  # Path to portrait-enhancer directory
-  use_existing_config: true  # Use existing portrait-enhancer config
-  fallback_to_basic: true  # Fallback to basic enhancement if portrait-enhancer fails
+# Facial Enhancement System
+facial_enhancement:
+  # Contouring and makeup application
+  contouring:
+    enabled: true
+    intensity: 0.7  # Overall contouring intensity (0.0 - 1.0)
+    blend_strength: 0.5  # How strongly to blend with original (0.0 - 1.0)
+    
+  # Expression lines and aging
+  expression_lines:
+    enabled: true
+    neutral_intensity: 0.3  # Intensity for neutral expressions (0.0 - 1.0)
+    smile_intensity: 0.6  # Intensity for smiling expressions (0.0 - 1.0)
+    
+  # Person-specific settings
+  person_profiles:
+    massy:
+      contour_strength: 0.8  # Stronger contouring for Massy
+      expression_strength: 0.5
+      lip_enhancement:
+        cupids_bow_intensity: 0.7  # Cupid's bow definition
+        lip_volume_boost: 0.6  # Lower lip volume enhancement
+        corner_definition: 0.5  # Lip corner shadows
+        perioral_wrinkles: 0.4  # Wrinkles around mouth area
+        color_intensity: 0.8  # Lip color enhancement
+    orbi:
+      contour_strength: 0.7  # Moderate contouring for Orbi  
+      expression_strength: 0.6
+      lip_enhancement:
+        cupids_bow_intensity: 0.6  # Subtle Cupid's bow
+        lip_volume_boost: 0.5  # Moderate lip volume
+        corner_definition: 0.4  # Light corner shadows
+        perioral_wrinkles: 0.3  # Minimal perioral lines
+        color_intensity: 0.6  # Natural lip color
+    yana:
+      contour_strength: 0.75  # Balanced contouring for Yana
+      expression_strength: 0.55
+      lip_enhancement:
+        cupids_bow_intensity: 0.65  # Balanced Cupid's bow
+        lip_volume_boost: 0.55  # Natural lip volume
+        corner_definition: 0.45  # Moderate corner definition
+        perioral_wrinkles: 0.35  # Light perioral wrinkles
+        color_intensity: 0.7  # Enhanced but natural lip color

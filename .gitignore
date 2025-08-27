@@ -70,12 +70,30 @@ portrait-enhancer/work/*
 portrait-enhancer/input/*
 !portrait-enhancer/input/.gitkeep
 
-# Models and large files
-models/
+# Models and large files (but not our data/models structure)
 *.safetensors
 *.ckpt
 *.pt
 *.pth
+
+# Image files and test data
+*.webp
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.bmp
+*.tiff
+
+# Data directories (keep structure, ignore content)
+data/samples/*
+!data/samples/.gitkeep
+data/models/*
+!data/models/.gitkeep
+
+# Input directory (temporary until migration)
+input/*
+!input/.gitkeep
 
 # Analysis results (keep structure, ignore content)
 *.txt

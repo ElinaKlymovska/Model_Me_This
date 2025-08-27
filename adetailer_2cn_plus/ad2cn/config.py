@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field, validator
 
 class DetectorConfig(BaseModel):
     """Configuration for face detectors."""
-    name: str = Field(..., description="Detector name: blazeface, retinaface, mtcnn, scrfd")
+    name: str = Field(..., description="Detector name: blazeface, retinaface, mtcnn, scrfd, opencv")
     confidence_threshold: float = Field(0.5, ge=0.0, le=1.0, description="Detection confidence threshold")
     nms_threshold: float = Field(0.3, ge=0.0, le=1.0, description="NMS threshold")
     max_faces: int = Field(100, ge=1, description="Maximum number of faces to detect")
@@ -17,7 +17,7 @@ class DetectorConfig(BaseModel):
     
     @validator('name')
     def validate_detector_name(cls, v):
-        valid_names = ['blazeface', 'retinaface', 'mtcnn', 'scrfd']
+        valid_names = ['blazeface', 'retinaface', 'mtcnn', 'scrfd', 'opencv', 'mediapipe']
         if v not in valid_names:
             raise ValueError(f'Detector must be one of: {valid_names}')
         return v
@@ -71,11 +71,43 @@ class BPassConfig(BaseModel):
     device: str = Field('auto', description="Device for processing: auto, cpu, cuda")
 
 
+class PersonProfileConfig(BaseModel):
+    """Configuration for person-specific settings."""
+    contour_strength: float = Field(0.7, ge=0.0, le=1.0, description="Contouring strength")
+    expression_strength: float = Field(0.5, ge=0.0, le=1.0, description="Expression lines strength")
+
+
+class ContouringConfig(BaseModel):
+    """Configuration for facial contouring."""
+    enabled: bool = Field(True, description="Enable contouring")
+    intensity: float = Field(0.7, ge=0.0, le=1.0, description="Overall contouring intensity")
+    blend_strength: float = Field(0.5, ge=0.0, le=1.0, description="Blending strength with original")
+
+
+class ExpressionLinesConfig(BaseModel):
+    """Configuration for expression lines."""
+    enabled: bool = Field(True, description="Enable expression lines")
+    neutral_intensity: float = Field(0.3, ge=0.0, le=1.0, description="Neutral expression intensity")
+    smile_intensity: float = Field(0.6, ge=0.0, le=1.0, description="Smiling expression intensity")
+
+
+class FacialEnhancementConfig(BaseModel):
+    """Configuration for facial enhancement system."""
+    contouring: ContouringConfig = Field(default_factory=ContouringConfig)
+    expression_lines: ExpressionLinesConfig = Field(default_factory=ExpressionLinesConfig)
+    person_profiles: dict = Field(default_factory=lambda: {
+        'massy': {'contour_strength': 0.8, 'expression_strength': 0.5},
+        'orbi': {'contour_strength': 0.7, 'expression_strength': 0.6},
+        'yana': {'contour_strength': 0.75, 'expression_strength': 0.55}
+    }, description="Person-specific profile settings")
+
+
 class Config(BaseModel):
     """Main configuration class."""
     pipeline: PipelineConfig
     a_pass: APassConfig = Field(default_factory=APassConfig)
     b_pass: BPassConfig = Field(default_factory=BPassConfig)
+    facial_enhancement: FacialEnhancementConfig = Field(default_factory=FacialEnhancementConfig)
     
     # I/O settings
     input_dir: Optional[Path] = Field(None, description="Input directory for batch processing")

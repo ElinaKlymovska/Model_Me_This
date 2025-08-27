@@ -53,7 +53,7 @@ def process_single_image(image_path: str, pipeline: DetectionPipeline,
         
         # Detect faces
         with Timer("face_detection"):
-            detections = pipeline.detect_faces(image)
+            detections = pipeline.detect(image)
         
         print(f"Detected {len(detections)} faces")
         
@@ -101,7 +101,7 @@ def process_batch(input_dir: str, pipeline: DetectionPipeline,
             
             # Detect faces
             with Timer("face_detection"):
-                detections = pipeline.detect_faces(image)
+                detections = pipeline.detect(image)
             
             print(f"  Detected {len(detections)} faces")
             
@@ -180,10 +180,9 @@ Examples:
         
         # Show pipeline info if requested
         if args.info:
-            pipeline_info = pipeline.get_pipeline_info()
             print("\nPipeline Information:")
-            for key, value in pipeline_info.items():
-                print(f"  {key}: {value}")
+            print(f"  Detectors: {list(pipeline.detectors.keys())}")
+            print(f"  Config: {config.pipeline.dict()}")
             return
         
     except Exception as e:
