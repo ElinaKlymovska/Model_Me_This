@@ -18,14 +18,19 @@ class ContouringMask:
     
     def __init__(self, config: Dict[str, Any]):
         self.config = config
-        self.contour_intensity = config.get('contouring', {}).get('intensity', 0.7)
-        self.blend_strength = config.get('contouring', {}).get('blend_strength', 0.5)
+        # DRASTICALLY REDUCED intensities for natural look
+        self.contour_intensity = config.get('contouring', {}).get('intensity', 0.15)  # Was 0.7, now 0.15
+        self.blend_strength = config.get('contouring', {}).get('blend_strength', 0.8)  # Higher blend for smoother transitions
         
-        # Person-specific settings
+        # Natural makeup intensity limits
+        self.max_highlight_intensity = 0.12  # Maximum highlight strength
+        self.max_shadow_intensity = 0.08     # Maximum shadow strength
+        
+        # Person-specific settings with NATURAL intensities
         self.person_profiles = config.get('contouring', {}).get('person_profiles', {
-            'massy': {'contour_strength': 0.8, 'expression_strength': 0.5},
-            'orbi': {'contour_strength': 0.7, 'expression_strength': 0.6}, 
-            'yana': {'contour_strength': 0.75, 'expression_strength': 0.55}
+            'massy': {'contour_strength': 0.12, 'expression_strength': 0.08},  # Was 0.8/0.5
+            'orbi': {'contour_strength': 0.10, 'expression_strength': 0.09},   # Was 0.7/0.6
+            'yana': {'contour_strength': 0.11, 'expression_strength': 0.085}   # Was 0.75/0.55
         })
         
         # Initialize face landmark predictor (if available)
@@ -46,12 +51,17 @@ class ContouringMask:
                 if person in filename:
                     return profile
         
-        # Default profile
-        return {'contour_strength': 0.7, 'expression_strength': 0.5}
+        # Default profile with NATURAL intensities
+        return {'contour_strength': 0.10, 'expression_strength': 0.08}  # Was 0.7/0.5
     
     def apply_contouring(self, image: np.ndarray, face_bbox: List[int], 
                         image_path: Optional[str] = None, landmarks: Optional[Dict] = None) -> np.ndarray:
-        """Apply complete facial contouring to image."""
+        """Apply complete NATURAL facial enhancement with validation."""
+        # Validate input image first
+        if not self._validate_input_image(image):
+            print("Input validation failed - returning original image")
+            return image
+            
         # Validate and refine bbox
         refined_bbox = self._refine_face_bbox(face_bbox, landmarks, image.shape[:2])
         x1, y1, x2, y2 = refined_bbox
@@ -59,37 +69,68 @@ class ContouringMask:
         face_region = image[y1:y2, x1:x2].copy()
         
         if face_region.size == 0:
+            print("Empty face region - returning original image")
+            return image
+        
+        # VALIDATE face region quality
+        if not self._validate_face_region(face_region):
+            print("Face region validation failed - returning original image")
             return image
             
         profile = self._get_person_profile(image_path)
-        intensity = self.contour_intensity * profile['contour_strength']
+        base_intensity = self.contour_intensity * profile['contour_strength']
         
-        # Get face landmarks if possible (fallback to dlib if no landmarks provided)
+        # APPLY SAFETY LIMITS to prevent unnatural results
+        safe_intensity = self._apply_safety_limits(base_intensity, face_region)
+        
+        # Store current face for color analysis
+        self._current_face = face_region.copy()
+        
+        # Get face landmarks if possible
         if landmarks is None:
             landmarks = self._get_face_landmarks(face_region)
         else:
-            # Adjust landmarks coordinates to face_region coordinate system
             landmarks = self._adjust_landmarks_to_face_region(landmarks, refined_bbox)
         
-        # Apply contouring elements with landmark guidance
-        contoured_face = self._apply_forehead_contouring(face_region, landmarks, intensity)
-        contoured_face = self._apply_eyebrow_eye_contouring(contoured_face, landmarks, intensity)
-        contoured_face = self._apply_nose_contouring(contoured_face, landmarks, intensity)
-        contoured_face = self._apply_cheek_contouring(contoured_face, landmarks, intensity)
-        contoured_face = self._apply_lip_contouring(contoured_face, landmarks, intensity)
-        contoured_face = self._apply_chin_jaw_contouring(contoured_face, landmarks, intensity)
+        # Apply natural contouring with validation at each step
+        original_face = face_region.copy()
+        contoured_face = face_region.copy()
         
-        # Blend back into original image
-        result = image.copy()
-        blend_mask = self._create_face_blend_mask(face_region.shape[:2])
-        
-        # Apply blending
-        for c in range(3):
-            face_channel = contoured_face[:, :, c].astype(np.float32)
-            orig_channel = result[y1:y2, x1:x2, c].astype(np.float32)
+        try:
+            # Apply each enhancement with individual validation
+            contoured_face = self._apply_forehead_contouring(contoured_face, landmarks, safe_intensity)
+            contoured_face = self._validate_step_result(contoured_face, original_face, "forehead")
             
-            blended = blend_mask * face_channel + (1 - blend_mask) * orig_channel
-            result[y1:y2, x1:x2, c] = np.clip(blended, 0, 255).astype(np.uint8)
+            contoured_face = self._apply_eyebrow_eye_contouring(contoured_face, landmarks, safe_intensity)
+            contoured_face = self._validate_step_result(contoured_face, original_face, "eyebrow")
+            
+            contoured_face = self._apply_nose_contouring(contoured_face, landmarks, safe_intensity)
+            contoured_face = self._validate_step_result(contoured_face, original_face, "nose")
+            
+            contoured_face = self._apply_cheek_contouring(contoured_face, landmarks, safe_intensity)
+            contoured_face = self._validate_step_result(contoured_face, original_face, "cheek")
+            
+            contoured_face = self._apply_lip_contouring(contoured_face, landmarks, safe_intensity)
+            contoured_face = self._validate_step_result(contoured_face, original_face, "lip")
+            
+            contoured_face = self._apply_chin_jaw_contouring(contoured_face, landmarks, safe_intensity)
+            contoured_face = self._validate_step_result(contoured_face, original_face, "chin_jaw")
+            
+        except Exception as e:
+            print(f"Contouring error: {e} - returning original image")
+            return image
+        
+        # Final validation of complete result
+        if not self._validate_final_result(contoured_face, original_face):
+            print("Final validation failed - returning original image")
+            return image
+        
+        # Clean up
+        if hasattr(self, '_current_face'):
+            delattr(self, '_current_face')
+        
+        # Apply natural blending back to original image
+        result = self._blend_face_naturally(image, contoured_face, refined_bbox)
         
         return result
     
@@ -110,69 +151,131 @@ class ContouringMask:
     
     def _apply_forehead_contouring(self, face: np.ndarray, landmarks: Optional[Any], 
                                  intensity: float) -> np.ndarray:
-        """Apply forehead contouring - horizontal line + side arcs."""
+        """Apply NATURAL forehead contouring using organic shapes."""
         h, w = face.shape[:2]
         result = face.copy()
         
-        # Horizontal line along upper forehead (darkening)
-        forehead_y = int(h * 0.15)  # Upper forehead area
+        # Create natural forehead shadow mask
         forehead_mask = np.zeros((h, w), dtype=np.float32)
         
-        # Create horizontal darkening line
-        cv2.rectangle(forehead_mask, (int(w*0.1), forehead_y-3), 
-                     (int(w*0.9), forehead_y+3), intensity * 0.3, -1)
+        # NATURAL forehead positioning - adapt to face proportions
+        face_ratio = w / h
+        if face_ratio > 0.9:  # Wide face
+            forehead_y = int(h * 0.12)
+            side_margin = int(w * 0.15)
+        elif face_ratio < 0.75:  # Narrow face
+            forehead_y = int(h * 0.10)
+            side_margin = int(w * 0.12)
+        else:  # Normal proportions
+            forehead_y = int(h * 0.11)
+            side_margin = int(w * 0.13)
         
-        # Vertical arcs on sides (narrowing)
-        left_arc_x = int(w * 0.08)
-        right_arc_x = int(w * 0.92)
+        # Create NATURAL curved forehead shadow (not straight line)
+        center_x = w // 2
+        shadow_width = w - 2 * side_margin
         
-        for y in range(int(h*0.1), int(h*0.4)):
-            arc_intensity = intensity * 0.25 * (1 - abs(y - h*0.25) / (h*0.15))
-            if arc_intensity > 0:
-                forehead_mask[y, left_arc_x-2:left_arc_x+2] = arc_intensity
-                forehead_mask[y, right_arc_x-2:right_arc_x+2] = arc_intensity
+        # Draw natural curved shadow using ellipse instead of rectangle
+        cv2.ellipse(forehead_mask, (center_x, forehead_y), 
+                   (shadow_width // 2, int(h * 0.015)), 0, 0, 360, 
+                   intensity * self.max_shadow_intensity, -1)
         
-        # Apply darkening
+        # Add subtle temple shadows (organic curves, not straight lines)
+        temple_y_start = int(h * 0.08)
+        temple_y_end = int(h * 0.35)
+        
+        # Left temple shadow - natural curve
+        for y in range(temple_y_start, temple_y_end):
+            progress = (y - temple_y_start) / (temple_y_end - temple_y_start)
+            curve_intensity = intensity * self.max_shadow_intensity * 0.6 * (1 - progress) * np.sin(progress * np.pi)
+            
+            if curve_intensity > 0.01:  # Only apply if visible
+                temple_x = int(side_margin * 0.7 + progress * side_margin * 0.3)
+                cv2.circle(forehead_mask, (temple_x, y), 
+                          max(2, int(w * 0.008)), curve_intensity, -1)
+        
+        # Right temple shadow - natural curve
+        for y in range(temple_y_start, temple_y_end):
+            progress = (y - temple_y_start) / (temple_y_end - temple_y_start)
+            curve_intensity = intensity * self.max_shadow_intensity * 0.6 * (1 - progress) * np.sin(progress * np.pi)
+            
+            if curve_intensity > 0.01:  # Only apply if visible
+                temple_x = int(w - side_margin * 0.7 - progress * side_margin * 0.3)
+                cv2.circle(forehead_mask, (temple_x, y), 
+                          max(2, int(w * 0.008)), curve_intensity, -1)
+        
+        # Apply natural darkening
         result = self._apply_darkening_mask(result, forehead_mask)
         return result
     
     def _apply_eyebrow_eye_contouring(self, face: np.ndarray, landmarks: Optional[Any],
                                     intensity: float) -> np.ndarray:
-        """Apply eyebrow and eye area contouring."""
+        """Apply NATURAL eyebrow and eye area enhancement."""
         h, w = face.shape[:2]
         result = face.copy()
         
-        # Under eyebrows - light highlight
+        # Adaptive positioning based on face proportions
+        face_ratio = w / h
+        if face_ratio > 0.9:  # Wide face
+            eye_y_ratio = 0.35
+            eye_spacing = 0.46
+            brow_y_offset = 0.04
+        elif face_ratio < 0.75:  # Narrow face
+            eye_y_ratio = 0.32
+            eye_spacing = 0.42
+            brow_y_offset = 0.035
+        else:  # Normal proportions
+            eye_y_ratio = 0.34
+            eye_spacing = 0.44
+            brow_y_offset = 0.038
+        
+        # NATURAL under-eyebrow highlighting
         brow_highlight_mask = np.zeros((h, w), dtype=np.float32)
         
-        left_brow_y = int(h * 0.32)
-        right_brow_y = int(h * 0.32)
+        left_brow_center = (int(w * (0.5 - eye_spacing/2)), int(h * (eye_y_ratio - brow_y_offset)))
+        right_brow_center = (int(w * (0.5 + eye_spacing/2)), int(h * (eye_y_ratio - brow_y_offset)))
         
-        # Left eyebrow highlight
-        cv2.ellipse(brow_highlight_mask, (int(w*0.27), left_brow_y), 
-                   (int(w*0.06), int(h*0.02)), 0, 0, 360, intensity * 0.4, -1)
+        # Natural brow highlight shapes (follow brow arch)
+        highlight_intensity = intensity * self.max_highlight_intensity * 2.0  # Still subtle
         
-        # Right eyebrow highlight  
-        cv2.ellipse(brow_highlight_mask, (int(w*0.73), right_brow_y),
-                   (int(w*0.06), int(h*0.02)), 0, 0, 360, intensity * 0.4, -1)
+        # Left eyebrow highlight with natural arch shape
+        cv2.ellipse(brow_highlight_mask, left_brow_center, 
+                   (max(8, int(w*0.04)), max(3, int(h*0.012))), 
+                   -15, 0, 360, highlight_intensity, -1)  # Slight angle for natural arch
         
-        # Above eyebrows outside - darkening for curve accent
+        # Right eyebrow highlight with natural arch shape
+        cv2.ellipse(brow_highlight_mask, right_brow_center,
+                   (max(8, int(w*0.04)), max(3, int(h*0.012))), 
+                   15, 0, 360, highlight_intensity, -1)   # Opposite angle for natural arch
+        
+        # VERY SUBTLE brow bone enhancement (no harsh shadows)
         brow_shadow_mask = np.zeros((h, w), dtype=np.float32)
         
-        cv2.ellipse(brow_shadow_mask, (int(w*0.22), int(h*0.28)),
-                   (int(w*0.03), int(h*0.015)), 0, 0, 360, intensity * 0.2, -1)
-        cv2.ellipse(brow_shadow_mask, (int(w*0.78), int(h*0.28)),
-                   (int(w*0.03), int(h*0.015)), 0, 0, 360, intensity * 0.2, -1)
+        shadow_intensity = intensity * self.max_shadow_intensity * 0.8  # Very light
         
-        # Under lower eyelid highlight (inner corners)
+        # Subtle brow bone definition (much smaller and lighter)
+        cv2.ellipse(brow_shadow_mask, 
+                   (left_brow_center[0] - int(w*0.02), left_brow_center[1] - int(h*0.015)),
+                   (max(4, int(w*0.015)), max(2, int(h*0.008))), 
+                   0, 0, 360, shadow_intensity, -1)
+        cv2.ellipse(brow_shadow_mask, 
+                   (right_brow_center[0] + int(w*0.02), right_brow_center[1] - int(h*0.015)),
+                   (max(4, int(w*0.015)), max(2, int(h*0.008))), 
+                   0, 0, 360, shadow_intensity, -1)
+        
+        # NATURAL inner corner highlights (tear duct area)
         eye_highlight_mask = np.zeros((h, w), dtype=np.float32)
         
-        cv2.circle(eye_highlight_mask, (int(w*0.32), int(h*0.42)), 
-                  int(w*0.015), intensity * 0.3, -1)
-        cv2.circle(eye_highlight_mask, (int(w*0.68), int(h*0.42)),
-                  int(w*0.015), intensity * 0.3, -1)
+        inner_corner_intensity = intensity * self.max_highlight_intensity * 1.5  # Subtle glow
         
-        # Apply highlights and shadows
+        left_inner_corner = (int(w * (0.5 - eye_spacing/2 + 0.02)), int(h * eye_y_ratio + int(h*0.01)))
+        right_inner_corner = (int(w * (0.5 + eye_spacing/2 - 0.02)), int(h * eye_y_ratio + int(h*0.01)))
+        
+        cv2.circle(eye_highlight_mask, left_inner_corner, 
+                  max(3, int(w*0.008)), inner_corner_intensity, -1)
+        cv2.circle(eye_highlight_mask, right_inner_corner,
+                  max(3, int(w*0.008)), inner_corner_intensity, -1)
+        
+        # Apply all enhancements with natural blending
         result = self._apply_highlighting_mask(result, brow_highlight_mask)
         result = self._apply_highlighting_mask(result, eye_highlight_mask)
         result = self._apply_darkening_mask(result, brow_shadow_mask)
@@ -181,43 +284,73 @@ class ContouringMask:
     
     def _apply_nose_contouring(self, face: np.ndarray, landmarks: Optional[Any],
                               intensity: float) -> np.ndarray:
-        """Apply nose contouring - parallel lines + highlights."""
+        """Apply NATURAL nose enhancement with organic shapes."""
         h, w = face.shape[:2]
         result = face.copy()
         
-        # Two parallel vertical lines along nose bridge (darkening)
-        nose_shadow_mask = np.zeros((h, w), dtype=np.float32)
+        # Adaptive nose positioning based on face proportions
+        face_ratio = w / h
+        if face_ratio > 0.9:  # Wide face
+            nose_start_ratio = 0.38
+            nose_end_ratio = 0.60
+            nose_width_ratio = 0.012
+        elif face_ratio < 0.75:  # Narrow face
+            nose_start_ratio = 0.36
+            nose_end_ratio = 0.62
+            nose_width_ratio = 0.010
+        else:  # Normal proportions
+            nose_start_ratio = 0.37
+            nose_end_ratio = 0.61
+            nose_width_ratio = 0.011
         
         nose_center_x = int(w * 0.5)
-        nose_width = int(w * 0.015)
-        nose_start_y = int(h * 0.35)
-        nose_end_y = int(h * 0.62)
+        nose_start_y = int(h * nose_start_ratio)
+        nose_end_y = int(h * nose_end_ratio)
+        nose_width = max(3, int(w * nose_width_ratio))
         
-        # Left shadow line
-        cv2.rectangle(nose_shadow_mask, 
-                     (nose_center_x - nose_width - 2, nose_start_y),
-                     (nose_center_x - nose_width, nose_end_y),
-                     intensity * 0.3, -1)
+        # NATURAL nose bridge shadows (soft curves, not harsh lines)
+        nose_shadow_mask = np.zeros((h, w), dtype=np.float32)
         
-        # Right shadow line  
-        cv2.rectangle(nose_shadow_mask,
-                     (nose_center_x + nose_width, nose_start_y),
-                     (nose_center_x + nose_width + 2, nose_end_y),
-                     intensity * 0.3, -1)
+        shadow_intensity = intensity * self.max_shadow_intensity * 1.2
         
-        # Nose bridge highlight (central strip)
+        # Create natural curved nose shadows instead of rectangles
+        shadow_points = []
+        for y in range(nose_start_y, nose_end_y):
+            progress = (y - nose_start_y) / (nose_end_y - nose_start_y)
+            # Natural nose curve - wider at bridge, narrower towards tip
+            current_width = nose_width * (1.2 - 0.4 * progress)
+            
+            # Left shadow curve
+            left_x = int(nose_center_x - current_width)
+            cv2.circle(nose_shadow_mask, (left_x, y), 
+                      max(1, int(current_width * 0.3)), shadow_intensity * (1 - progress * 0.3), -1)
+            
+            # Right shadow curve
+            right_x = int(nose_center_x + current_width)
+            cv2.circle(nose_shadow_mask, (right_x, y), 
+                      max(1, int(current_width * 0.3)), shadow_intensity * (1 - progress * 0.3), -1)
+        
+        # NATURAL nose bridge highlight (gentle ellipse, not rectangle)
         nose_highlight_mask = np.zeros((h, w), dtype=np.float32)
         
-        cv2.rectangle(nose_highlight_mask,
-                     (nose_center_x - nose_width//2, nose_start_y),
-                     (nose_center_x + nose_width//2, nose_end_y),
-                     intensity * 0.4, -1)
+        highlight_intensity = intensity * self.max_highlight_intensity * 2.5
         
-        # Nose tip highlight
-        cv2.circle(nose_highlight_mask, (nose_center_x, int(h * 0.58)),
-                  int(w * 0.012), intensity * 0.35, -1)
+        # Main bridge highlight - natural elliptical shape
+        bridge_center_y = int((nose_start_y + nose_end_y) * 0.5)
+        bridge_length = nose_end_y - nose_start_y
         
-        # Apply contouring
+        cv2.ellipse(nose_highlight_mask, (nose_center_x, bridge_center_y),
+                   (max(2, int(nose_width * 0.4)), max(6, int(bridge_length * 0.35))),
+                   0, 0, 360, highlight_intensity, -1)
+        
+        # NATURAL nose tip highlight (organic shape)
+        tip_y = int(h * (nose_end_ratio - 0.02))
+        tip_size = max(2, int(w * 0.008))
+        
+        cv2.circle(nose_highlight_mask, (nose_center_x, tip_y),
+                  tip_size, highlight_intensity * 0.8, -1)
+        
+        # Apply natural nose contouring
         result = self._apply_darkening_mask(result, nose_shadow_mask)
         result = self._apply_highlighting_mask(result, nose_highlight_mask)
         
@@ -225,51 +358,80 @@ class ContouringMask:
     
     def _apply_cheek_contouring(self, face: np.ndarray, landmarks: Optional[Any],
                                intensity: float) -> np.ndarray:
-        """Apply cheek contouring - diagonal shadow lines + highlights."""
+        """Apply NATURAL cheek enhancement with organic shapes."""
         h, w = face.shape[:2]
         result = face.copy()
         
-        # Diagonal shadow lines from ear to mouth corner (below cheekbones)
+        # Adaptive cheek positioning based on face proportions
+        face_ratio = w / h
+        if face_ratio > 0.9:  # Wide face
+            cheek_y_start = 0.50
+            cheek_y_end = 0.68
+            cheek_width_ratio = 0.15
+            highlight_y = 0.48
+        elif face_ratio < 0.75:  # Narrow face
+            cheek_y_start = 0.52
+            cheek_y_end = 0.72
+            cheek_width_ratio = 0.12
+            highlight_y = 0.50
+        else:  # Normal proportions
+            cheek_y_start = 0.51
+            cheek_y_end = 0.70
+            cheek_width_ratio = 0.13
+            highlight_y = 0.49
+        
+        # NATURAL cheek shadows (soft curves, not harsh polygons)
         cheek_shadow_mask = np.zeros((h, w), dtype=np.float32)
+        shadow_intensity = intensity * self.max_shadow_intensity * 1.8
         
-        # Left cheek shadow
-        left_pts = np.array([
-            [int(w*0.05), int(h*0.55)],  # Near ear
-            [int(w*0.15), int(h*0.60)],
-            [int(w*0.25), int(h*0.68)],
-            [int(w*0.35), int(h*0.75)],  # Toward mouth
-            [int(w*0.30), int(h*0.80)],
-            [int(w*0.10), int(h*0.65)]
-        ], np.int32)
+        # Create natural cheek hollow shadows with elliptical shapes
+        left_cheek_center = (int(w * 0.22), int(h * (cheek_y_start + cheek_y_end) * 0.5))
+        right_cheek_center = (int(w * 0.78), int(h * (cheek_y_start + cheek_y_end) * 0.5))
         
-        cv2.fillPoly(cheek_shadow_mask, [left_pts], intensity * 0.25)
+        cheek_width = max(12, int(w * cheek_width_ratio))
+        cheek_height = max(8, int(h * (cheek_y_end - cheek_y_start) * 0.4))
         
-        # Right cheek shadow
-        right_pts = np.array([
-            [int(w*0.95), int(h*0.55)],  # Near ear
-            [int(w*0.85), int(h*0.60)],
-            [int(w*0.75), int(h*0.68)],
-            [int(w*0.65), int(h*0.75)],  # Toward mouth
-            [int(w*0.70), int(h*0.80)],
-            [int(w*0.90), int(h*0.65)]
-        ], np.int32)
+        # Left cheek shadow - natural hollow shape
+        cv2.ellipse(cheek_shadow_mask, left_cheek_center,
+                   (cheek_width, cheek_height), -25, 0, 360, shadow_intensity, -1)
         
-        cv2.fillPoly(cheek_shadow_mask, [right_pts], intensity * 0.25)
+        # Right cheek shadow - natural hollow shape
+        cv2.ellipse(cheek_shadow_mask, right_cheek_center,
+                   (cheek_width, cheek_height), 25, 0, 360, shadow_intensity, -1)
         
-        # Cheekbone highlights (above shadow lines)
+        # NATURAL cheekbone highlights (subtle, organic)
         cheek_highlight_mask = np.zeros((h, w), dtype=np.float32)
+        highlight_intensity = intensity * self.max_highlight_intensity * 3.0  # Still subtle
         
-        # Left cheek highlight
-        cv2.ellipse(cheek_highlight_mask, (int(w*0.25), int(h*0.52)),
-                   (int(w*0.08), int(h*0.03)), -30, 0, 360, intensity * 0.4, -1)
+        left_highlight_center = (int(w * 0.26), int(h * highlight_y))
+        right_highlight_center = (int(w * 0.74), int(h * highlight_y))
         
-        # Right cheek highlight
-        cv2.ellipse(cheek_highlight_mask, (int(w*0.75), int(h*0.52)),
-                   (int(w*0.08), int(h*0.03)), 30, 0, 360, intensity * 0.4, -1)
+        highlight_width = max(8, int(w * 0.06))
+        highlight_height = max(4, int(h * 0.02))
         
-        # Apply contouring
+        # Natural cheekbone highlights following facial structure
+        cv2.ellipse(cheek_highlight_mask, left_highlight_center,
+                   (highlight_width, highlight_height), -20, 0, 360, highlight_intensity, -1)
+        
+        cv2.ellipse(cheek_highlight_mask, right_highlight_center,
+                   (highlight_width, highlight_height), 20, 0, 360, highlight_intensity, -1)
+        
+        # Add subtle apple-of-cheek glow for natural warmth
+        apple_highlight_mask = np.zeros((h, w), dtype=np.float32)
+        apple_intensity = intensity * self.max_highlight_intensity * 1.5
+        
+        left_apple = (int(w * 0.30), int(h * (highlight_y + 0.03)))
+        right_apple = (int(w * 0.70), int(h * (highlight_y + 0.03)))
+        
+        apple_size = max(6, int(w * 0.025))
+        
+        cv2.circle(apple_highlight_mask, left_apple, apple_size, apple_intensity, -1)
+        cv2.circle(apple_highlight_mask, right_apple, apple_size, apple_intensity, -1)
+        
+        # Apply natural cheek enhancements
         result = self._apply_darkening_mask(result, cheek_shadow_mask)
         result = self._apply_highlighting_mask(result, cheek_highlight_mask)
+        result = self._apply_highlighting_mask(result, apple_highlight_mask)
         
         return result
     
@@ -293,7 +455,7 @@ class ContouringMask:
         return result
     
     def _get_lip_coordinates(self, landmarks: Optional[Any], face_shape: tuple) -> Optional[Dict]:
-        """Extract or estimate lip coordinates."""
+        """Extract or estimate lip coordinates with improved detection."""
         if landmarks and isinstance(landmarks, dict) and 'mouth' in landmarks:
             try:
                 mouth_points = np.array(landmarks['mouth'])
@@ -311,17 +473,135 @@ class ContouringMask:
             except Exception:
                 pass
         
-        # Fallback to estimated positions
+        # ПОКРАЩЕНЕ ВИЗНАЧЕННЯ ПОЗИЦІЙ ГУБ на основі аналізу обличчя
         h, w = face_shape[:2]
+        
+        # Спробувати знайти губи за кольором
+        detected_mouth = self._detect_mouth_by_color(self._current_face) if hasattr(self, '_current_face') else None
+        
+        if detected_mouth:
+            return detected_mouth
+        
+        # Покращене оцінювання позицій з урахуванням пропорцій обличчя
+        # Визначити тип обличчя для кращого позиціонування
+        face_ratio = w / h
+        
+        if face_ratio > 0.9:  # Широке обличчя
+            mouth_y_ratio = 0.72
+            mouth_width_ratio = 0.18
+        elif face_ratio < 0.75:  # Вузьке обличчя  
+            mouth_y_ratio = 0.75
+            mouth_width_ratio = 0.15
+        else:  # Звичайне обличчя
+            mouth_y_ratio = 0.74
+            mouth_width_ratio = 0.16
+        
         return {
-            'upper_lip_center': [int(w*0.5), int(h*0.74)],
-            'lower_lip_center': [int(w*0.5), int(h*0.78)],
-            'left_corner': [int(w*0.42), int(h*0.76)],
-            'right_corner': [int(w*0.58), int(h*0.76)],
-            'mouth_center': [int(w*0.5), int(h*0.76)],
-            'mouth_width': int(w*0.16),
+            'upper_lip_center': [int(w*0.5), int(h*mouth_y_ratio)],
+            'lower_lip_center': [int(w*0.5), int(h*(mouth_y_ratio + 0.04))],
+            'left_corner': [int(w*(0.5 - mouth_width_ratio/2)), int(h*(mouth_y_ratio + 0.02))],
+            'right_corner': [int(w*(0.5 + mouth_width_ratio/2)), int(h*(mouth_y_ratio + 0.02))],
+            'mouth_center': [int(w*0.5), int(h*(mouth_y_ratio + 0.02))],
+            'mouth_width': int(w*mouth_width_ratio),
             'mouth_height': int(h*0.04)
         }
+
+    def _detect_mouth_by_color(self, face_region: np.ndarray) -> Optional[Dict]:
+        """Advanced mouth detection by color analysis and edge detection."""
+        try:
+            h, w = face_region.shape[:2]
+            
+            # Method 1: Color-based detection (improved)
+            face_hsv = cv2.cvtColor(face_region, cv2.COLOR_BGR2HSV)
+            
+            # Extended red ranges for lips
+            lower_red1 = np.array([0, 30, 30])
+            upper_red1 = np.array([10, 255, 255])
+            lower_red2 = np.array([160, 30, 30])  
+            upper_red2 = np.array([180, 255, 255])
+            
+            mask1 = cv2.inRange(face_hsv, lower_red1, upper_red1)
+            mask2 = cv2.inRange(face_hsv, lower_red2, upper_red2)
+            red_mask = cv2.bitwise_or(mask1, mask2)
+            
+            # Find red contours
+            contours, _ = cv2.findContours(red_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            
+            mouth_candidates = []
+            
+            for contour in contours:
+                area = cv2.contourArea(contour)
+                lip_x, lip_y, lip_w, lip_h = cv2.boundingRect(contour)
+                
+                # More flexible size and position criteria
+                if (area > 30 and lip_w > w * 0.05 and lip_h > h * 0.015 and 
+                    lip_y > h * 0.55 and lip_y < h * 0.85 and 
+                    lip_x > w * 0.15 and lip_x < w * 0.85):
+                    
+                    mouth_center = [lip_x + lip_w//2, lip_y + lip_h//2]
+                    score = area * (1.0 - abs((mouth_center[1]) - h*0.72))
+                    
+                    mouth_candidates.append({
+                        'center': mouth_center,
+                        'bbox': (lip_x, lip_y, lip_w, lip_h),
+                        'area': area,
+                        'score': score
+                    })
+            
+            # Method 2: Shadow detection fallback
+            if not mouth_candidates:
+                # Look for dark horizontal lines (mouth shadows)
+                face_gray = cv2.cvtColor(face_region, cv2.COLOR_BGR2GRAY)
+                
+                # Focus on mouth area
+                mouth_region_y1 = int(h * 0.65)
+                mouth_region_y2 = int(h * 0.85)
+                mouth_region_x1 = int(w * 0.25)
+                mouth_region_x2 = int(w * 0.75)
+                
+                mouth_region = face_gray[mouth_region_y1:mouth_region_y2, mouth_region_x1:mouth_region_x2]
+                
+                if mouth_region.size > 0:
+                    # Find darkest horizontal line (potential mouth line)
+                    horizontal_means = np.mean(mouth_region, axis=1)
+                    darkest_row = np.argmin(horizontal_means)
+                    
+                    actual_mouth_y = mouth_region_y1 + darkest_row
+                    estimated_mouth_x = mouth_region_x1 + mouth_region.shape[1] // 2
+                    
+                    # Create candidate from detected shadow
+                    estimated_width = int(w * 0.18)  # Reasonable mouth width
+                    estimated_height = int(h * 0.03)  # Reasonable mouth height
+                    
+                    mouth_candidates.append({
+                        'center': [estimated_mouth_x, actual_mouth_y],
+                        'bbox': (estimated_mouth_x - estimated_width//2, actual_mouth_y - estimated_height//2,
+                                estimated_width, estimated_height),
+                        'area': estimated_width * estimated_height,
+                        'score': 100  # Give decent score to shadow-based detection
+                    })
+            
+            # Use best candidate
+            if mouth_candidates:
+                best_candidate = max(mouth_candidates, key=lambda x: x['score'])
+                
+                mouth_center = best_candidate['center']
+                lip_x, lip_y, lip_w, lip_h = best_candidate['bbox']
+                
+                return {
+                    'upper_lip_center': [mouth_center[0], lip_y],
+                    'lower_lip_center': [mouth_center[0], lip_y + lip_h],
+                    'left_corner': [lip_x, mouth_center[1]],
+                    'right_corner': [lip_x + lip_w, mouth_center[1]],
+                    'mouth_center': mouth_center,
+                    'mouth_width': lip_w,
+                    'mouth_height': lip_h
+                }
+                
+        except Exception:
+            pass
+        
+        return None
     
     def _apply_landmark_based_lip_contouring(self, face: np.ndarray, lip_coords: Dict, 
                                            intensity: float) -> np.ndarray:
@@ -335,22 +615,35 @@ class ContouringMask:
         upper_lip = lip_coords['upper_lip_center']
         mouth_width = lip_coords['mouth_width']
         
-        # Detailed Cupid's bow - central dip and side peaks
+        # ADAPTIVE Enhanced Cupid's bow - розміри залежать від справжнього розміру рота
         cupid_bow_center = upper_lip
-        peak_offset = max(4, int(mouth_width * 0.15))
         
-        # Central dip (deeper highlight)
+        # Adaptive sizing based on detected mouth width
+        if mouth_width < 30:  # Маленький рот
+            cupid_radius = max(6, int(mouth_width * 0.2))
+            peak_offset = max(8, int(mouth_width * 0.3))
+            peak_radius = max(4, int(mouth_width * 0.15))
+        elif mouth_width > 60:  # Великий рот
+            cupid_radius = max(8, int(mouth_width * 0.12))
+            peak_offset = max(10, int(mouth_width * 0.15))
+            peak_radius = max(6, int(mouth_width * 0.1))
+        else:  # Середній рот
+            cupid_radius = max(7, int(mouth_width * 0.15))
+            peak_offset = max(9, int(mouth_width * 0.2))
+            peak_radius = max(5, int(mouth_width * 0.12))
+        
+        # Central dip (адаптивний розмір)
         cv2.circle(lip_highlight_mask, tuple(cupid_bow_center),
-                  max(2, int(mouth_width * 0.06)), intensity * 0.4, -1)
+                  cupid_radius, intensity * 0.7, -1)  # Підвищена інтенсивність
         
-        # Side peaks (more prominent)
-        left_peak = [cupid_bow_center[0] - peak_offset, cupid_bow_center[1] - 1]
-        right_peak = [cupid_bow_center[0] + peak_offset, cupid_bow_center[1] - 1]
+        # Side peaks (адаптивні)
+        left_peak = [cupid_bow_center[0] - peak_offset, cupid_bow_center[1] - 3]
+        right_peak = [cupid_bow_center[0] + peak_offset, cupid_bow_center[1] - 3]
         
         cv2.circle(lip_highlight_mask, tuple(left_peak),
-                  max(2, int(mouth_width * 0.05)), intensity * 0.35, -1)
+                  peak_radius, intensity * 0.6, -1)
         cv2.circle(lip_highlight_mask, tuple(right_peak),
-                  max(2, int(mouth_width * 0.05)), intensity * 0.35, -1)
+                  peak_radius, intensity * 0.6, -1)
         
         # Upper lip contour line
         self._draw_lip_contour_line(lip_highlight_mask, upper_lip, mouth_width, 
@@ -455,92 +748,163 @@ class ContouringMask:
     
     def _apply_perioral_enhancements(self, face: np.ndarray, lip_coords: Optional[Dict], 
                                    intensity: float) -> np.ndarray:
-        """Add perioral area enhancements (around mouth area)."""
+        """Add enhanced perioral area enhancements with vertical lip lines and marionette lines."""
         if not lip_coords:
             return face
             
         h, w = face.shape[:2]
         result = face.copy()
         
-        # Philtrum enhancement (area between nose and upper lip)
+        # Enhanced philtrum area (area between nose and upper lip)
         philtrum_mask = np.zeros((h, w), dtype=np.float32)
         
         upper_lip = lip_coords['upper_lip_center']
-        philtrum_center = [upper_lip[0], upper_lip[1] - max(5, int(lip_coords['mouth_height'] * 1.2))]
+        philtrum_center = [upper_lip[0], upper_lip[1] - max(8, int(lip_coords['mouth_height'] * 1.5))]  # Було 5, 1.2
         
-        # Subtle philtrum lines
+        # More prominent philtrum lines
         cv2.line(philtrum_mask, 
-                (philtrum_center[0] - 1, philtrum_center[1]), 
-                (upper_lip[0] - 2, upper_lip[1]), 
-                intensity * 0.1, 1)
+                (philtrum_center[0] - 2, philtrum_center[1]), 
+                (upper_lip[0] - 3, upper_lip[1]), 
+                intensity * 0.2, 2)  # Було 0.1, товщина 1
         cv2.line(philtrum_mask, 
-                (philtrum_center[0] + 1, philtrum_center[1]), 
-                (upper_lip[0] + 2, upper_lip[1]), 
-                intensity * 0.1, 1)
+                (philtrum_center[0] + 2, philtrum_center[1]), 
+                (upper_lip[0] + 3, upper_lip[1]), 
+                intensity * 0.2, 2)  # Було 0.1, товщина 1
         
-        # Lip corners enhancement for more definition
-        corner_enhance_mask = np.zeros((h, w), dtype=np.float32)
+        # ДОДАТИ ВЕРТИКАЛЬНІ ЛІНІЇ НАД ГУБАМИ (8-10 ліній)
+        perioral_lines_mask = np.zeros((h, w), dtype=np.float32)
         
+        mouth_width = lip_coords['mouth_width']
         left_corner = lip_coords['left_corner']
         right_corner = lip_coords['right_corner']
         
-        # Small corner shadows for definition
-        corner_size = max(1, int(lip_coords['mouth_width'] * 0.05))
-        cv2.circle(corner_enhance_mask, tuple(left_corner), corner_size, intensity * 0.12, -1)
-        cv2.circle(corner_enhance_mask, tuple(right_corner), corner_size, intensity * 0.12, -1)
+        # ADAPTIVE perioral lines based on actual mouth width
+        line_count = max(6, min(12, mouth_width // 4))  # Адаптивна кількість ліній
         
-        # Apply perioral enhancements
+        for i in range(line_count):
+            t = i / (line_count - 1) if line_count > 1 else 0.5
+            x_pos = int(left_corner[0] + t * (right_corner[0] - left_corner[0]))
+            
+            # Adaptive line length based on mouth height
+            line_length = max(8, int(mouth_width * 0.12))  # Довші лінії для великих ротів
+            start_y = upper_lip[1] - line_length
+            end_y = upper_lip[1] - 3
+            
+            # Stronger lines for better visibility
+            cv2.line(perioral_lines_mask, (x_pos, start_y), (x_pos, end_y), 
+                    intensity * 0.35, 3)  # Підвищена інтенсивність та товщина
+        
+        # ADAPTIVE MARIONETTE LINES (розмір залежить від рота)
+        marionette_mask = np.zeros((h, w), dtype=np.float32)
+        
+        # Adaptive marionette length based on face proportions
+        mouth_height = lip_coords.get('mouth_height', 20)
+        marionette_length = max(12, min(30, int(mouth_height * 2.5)))  # Пропорційно до висоти рота
+        
+        # Left marionette line (адаптивний)
+        left_start = left_corner
+        left_end = [left_corner[0], left_corner[1] + marionette_length]
+        
+        cv2.line(marionette_mask, tuple(left_start), tuple(left_end), 
+                intensity * 0.4, 4)  # Підвищена інтенсивність та товщина
+        
+        # Right marionette line (адаптивний)
+        right_start = right_corner
+        right_end = [right_corner[0], right_corner[1] + marionette_length]
+        
+        cv2.line(marionette_mask, tuple(right_start), tuple(right_end), 
+                intensity * 0.4, 4)  # Підвищена інтенсивність та товщина
+        
+        # Enhanced corner shadows for definition
+        corner_enhance_mask = np.zeros((h, w), dtype=np.float32)
+        
+        # Larger corner shadows
+        corner_size = max(3, int(lip_coords['mouth_width'] * 0.08))  # Було 1, 0.05
+        cv2.circle(corner_enhance_mask, tuple(left_corner), corner_size, intensity * 0.2, -1)  # Було 0.12
+        cv2.circle(corner_enhance_mask, tuple(right_corner), corner_size, intensity * 0.2, -1)  # Було 0.12
+        
+        # Apply all perioral enhancements
         result = self._apply_darkening_mask(result, philtrum_mask)
+        result = self._apply_darkening_mask(result, perioral_lines_mask)
+        result = self._apply_darkening_mask(result, marionette_mask)
         result = self._apply_darkening_mask(result, corner_enhance_mask)
         
         return result
     
     def _apply_chin_jaw_contouring(self, face: np.ndarray, landmarks: Optional[Any],
                                   intensity: float) -> np.ndarray:
-        """Apply chin and jawline contouring."""
+        """Apply NATURAL chin and jawline enhancement."""
         h, w = face.shape[:2]
         result = face.copy()
         
-        # Under chin darkening
+        # Adaptive positioning based on face proportions
+        face_ratio = w / h
+        if face_ratio > 0.9:  # Wide face
+            chin_y = 0.92
+            jaw_start_y = 0.78
+            jaw_curve_intensity = 1.2
+        elif face_ratio < 0.75:  # Narrow face
+            chin_y = 0.90
+            jaw_start_y = 0.76
+            jaw_curve_intensity = 0.8
+        else:  # Normal proportions
+            chin_y = 0.91
+            jaw_start_y = 0.77
+            jaw_curve_intensity = 1.0
+        
+        # NATURAL under-chin shadow (soft, not harsh)
         chin_shadow_mask = np.zeros((h, w), dtype=np.float32)
+        shadow_intensity = intensity * self.max_shadow_intensity * 1.5
         
-        cv2.ellipse(chin_shadow_mask, (int(w*0.5), int(h*0.95)),
-                   (int(w*0.12), int(h*0.08)), 0, 0, 360, intensity * 0.25, -1)
+        chin_shadow_center = (int(w * 0.5), int(h * (chin_y + 0.04)))
+        chin_shadow_width = max(8, int(w * 0.08))
+        chin_shadow_height = max(4, int(h * 0.04))
         
-        # Jawline darkening
+        cv2.ellipse(chin_shadow_mask, chin_shadow_center,
+                   (chin_shadow_width, chin_shadow_height), 
+                   0, 0, 360, shadow_intensity, -1)
+        
+        # NATURAL jawline enhancement (subtle curves, not polygons)
         jaw_shadow_mask = np.zeros((h, w), dtype=np.float32)
+        jaw_intensity = intensity * self.max_shadow_intensity * jaw_curve_intensity
         
-        # Left jawline
-        left_jaw_pts = np.array([
-            [int(w*0.05), int(h*0.75)],
-            [int(w*0.15), int(h*0.85)],
-            [int(w*0.35), int(h*0.92)],
-            [int(w*0.30), int(h*0.95)],
-            [int(w*0.10), int(h*0.90)],
-            [int(w*0.02), int(h*0.80)]
-        ], np.int32)
+        # Create natural jaw curves using connected ellipses
+        jaw_points_y = int(h * jaw_start_y)
+        jaw_end_y = int(h * (chin_y - 0.02))
         
-        cv2.fillPoly(jaw_shadow_mask, [left_jaw_pts], intensity * 0.2)
+        # Left jawline curve
+        for i, y_progress in enumerate(np.linspace(0, 1, 5)):
+            y_pos = int(jaw_points_y + y_progress * (jaw_end_y - jaw_points_y))
+            x_pos = int(w * (0.08 + y_progress * 0.32))  # Natural jaw curve
+            
+            curve_intensity = jaw_intensity * (1 - y_progress * 0.3)  # Fade towards chin
+            curve_size = max(3, int(w * (0.015 - y_progress * 0.005)))
+            
+            cv2.circle(jaw_shadow_mask, (x_pos, y_pos), 
+                      curve_size, curve_intensity, -1)
         
-        # Right jawline
-        right_jaw_pts = np.array([
-            [int(w*0.95), int(h*0.75)],
-            [int(w*0.85), int(h*0.85)],
-            [int(w*0.65), int(h*0.92)],
-            [int(w*0.70), int(h*0.95)],
-            [int(w*0.90), int(h*0.90)],
-            [int(w*0.98), int(h*0.80)]
-        ], np.int32)
+        # Right jawline curve
+        for i, y_progress in enumerate(np.linspace(0, 1, 5)):
+            y_pos = int(jaw_points_y + y_progress * (jaw_end_y - jaw_points_y))
+            x_pos = int(w * (0.92 - y_progress * 0.32))  # Natural jaw curve
+            
+            curve_intensity = jaw_intensity * (1 - y_progress * 0.3)  # Fade towards chin
+            curve_size = max(3, int(w * (0.015 - y_progress * 0.005)))
+            
+            cv2.circle(jaw_shadow_mask, (x_pos, y_pos), 
+                      curve_size, curve_intensity, -1)
         
-        cv2.fillPoly(jaw_shadow_mask, [right_jaw_pts], intensity * 0.2)
-        
-        # Center chin highlight
+        # NATURAL chin highlight (subtle, organic)
         chin_highlight_mask = np.zeros((h, w), dtype=np.float32)
+        highlight_intensity = intensity * self.max_highlight_intensity * 2.0
         
-        cv2.circle(chin_highlight_mask, (int(w*0.5), int(h*0.88)),
-                  int(w*0.015), intensity * 0.3, -1)
+        chin_highlight_center = (int(w * 0.5), int(h * chin_y))
+        highlight_size = max(4, int(w * 0.012))
         
-        # Apply contouring
+        cv2.circle(chin_highlight_mask, chin_highlight_center,
+                  highlight_size, highlight_intensity, -1)
+        
+        # Apply natural chin and jaw enhancements
         result = self._apply_darkening_mask(result, chin_shadow_mask)
         result = self._apply_darkening_mask(result, jaw_shadow_mask)
         result = self._apply_highlighting_mask(result, chin_highlight_mask)
@@ -598,35 +962,72 @@ class ContouringMask:
         return np.clip(result, 0, 255).astype(np.uint8)
     
     def _analyze_skin_tone(self, image: np.ndarray) -> Dict[str, float]:
-        """Analyze skin tone characteristics for adaptive makeup."""
-        # Convert to different color spaces for analysis
+        """Advanced skin tone analysis for natural makeup color selection."""
+        # Multiple color space analysis for comprehensive skin tone understanding
         lab_image = cv2.cvtColor(image.astype(np.uint8), cv2.COLOR_BGR2LAB)
+        hsv_image = cv2.cvtColor(image.astype(np.uint8), cv2.COLOR_BGR2HSV)
         
-        # Calculate average skin tone values
-        l_mean = np.mean(lab_image[:, :, 0])  # Lightness
-        a_mean = np.mean(lab_image[:, :, 1])  # Green-Red axis
-        b_mean = np.mean(lab_image[:, :, 2])  # Blue-Yellow axis
+        # Focus on central skin areas (avoid hair, background, shadows)
+        h, w = image.shape[:2]
+        central_region = image[int(h*0.3):int(h*0.7), int(w*0.25):int(w*0.75)]
+        central_lab = lab_image[int(h*0.3):int(h*0.7), int(w*0.25):int(w*0.75)]
+        central_hsv = hsv_image[int(h*0.3):int(h*0.7), int(w*0.25):int(w*0.75)]
         
-        # Determine skin characteristics
-        is_warm_tone = b_mean > 128  # Higher B values indicate warmer (yellow) tones
-        is_light_skin = l_mean > 140  # Higher L values indicate lighter skin
+        # Advanced skin tone metrics
+        l_mean = np.mean(central_lab[:, :, 0])  # Lightness
+        a_mean = np.mean(central_lab[:, :, 1])  # Green-Red axis  
+        b_mean = np.mean(central_lab[:, :, 2])  # Blue-Yellow axis
+        
+        # HSV analysis for better undertone detection
+        h_mean = np.mean(central_hsv[:, :, 0])  # Hue
+        s_mean = np.mean(central_hsv[:, :, 1])  # Saturation
+        v_mean = np.mean(central_hsv[:, :, 2])  # Value/Brightness
+        
+        # RGB analysis for natural color matching
+        r_mean = np.mean(central_region[:, :, 2])  # Red channel
+        g_mean = np.mean(central_region[:, :, 1])  # Green channel
+        b_channel_mean = np.mean(central_region[:, :, 0])  # Blue channel
+        
+        # Sophisticated undertone detection
+        warmth_score = (b_mean - 128) + (h_mean < 30 or h_mean > 300) * 20
+        
+        # Detailed skin classification
+        is_very_light = l_mean > 180
+        is_light = l_mean > 150 and l_mean <= 180  
+        is_medium = l_mean > 120 and l_mean <= 150
+        is_dark = l_mean > 90 and l_mean <= 120
+        is_very_dark = l_mean <= 90
+        
+        is_warm = warmth_score > 5
+        is_neutral = abs(warmth_score) <= 5
+        is_cool = warmth_score < -5
         
         return {
             'lightness': l_mean,
-            'warmth': b_mean - 128,  # Positive = warm, negative = cool
-            'saturation': a_mean - 128,  # Green-red saturation
-            'is_warm': is_warm_tone,
-            'is_light': is_light_skin
+            'warmth': warmth_score,
+            'saturation': s_mean,
+            'hue': h_mean,
+            'brightness': v_mean,
+            'rgb': [r_mean, g_mean, b_channel_mean],
+            'lab': [l_mean, a_mean, b_mean],
+            'is_very_light': is_very_light,
+            'is_light': is_light, 
+            'is_medium': is_medium,
+            'is_dark': is_dark,
+            'is_very_dark': is_very_dark,
+            'is_warm': is_warm,
+            'is_neutral': is_neutral,
+            'is_cool': is_cool,
+            'undertone_strength': abs(warmth_score)
         }
     
     def _create_gradient_mask(self, mask: np.ndarray) -> np.ndarray:
-        """Create gradient version of mask for smoother blending."""
-        # Apply multiple levels of gaussian blur for gradient effect
+        """Create natural gradient mask for seamless blending."""
         gradient_mask = mask.copy().astype(np.float32)
         
-        # Create multiple layers of falloff
-        blur_sizes = [3, 5, 9]
-        weights = [0.6, 0.3, 0.1]
+        # NATURAL blending - multiple blur levels for seamless transitions
+        blur_sizes = [3, 7, 15]  # Larger blur sizes for natural falloff
+        weights = [0.2, 0.5, 0.3]  # More weight on medium blur for natural look
         
         blended_mask = np.zeros_like(gradient_mask)
         
@@ -634,87 +1035,132 @@ class ContouringMask:
             blurred = cv2.GaussianBlur(gradient_mask, (blur_size, blur_size), 0)
             blended_mask += blurred * weight
         
-        # Normalize and apply power curve for more natural falloff
+        # Normalize and apply gentle power curve for natural falloff
         blended_mask = blended_mask / np.sum(weights)
-        blended_mask = np.power(blended_mask, 1.5)  # Power curve for softer edges
+        blended_mask = np.power(blended_mask, 0.8)  # Gentle curve for smooth transitions
+        
+        # Additional smoothing for ultra-natural blending
+        blended_mask = cv2.GaussianBlur(blended_mask, (5, 5), 0)
         
         return blended_mask
     
     def _get_adaptive_darkening_factor(self, skin_tone: Dict[str, float]) -> float:
-        """Calculate adaptive darkening factor based on skin tone."""
-        base_factor = 0.75
+        """Calculate NATURAL darkening factor for subtle contouring."""
+        # NATURAL base factors - much more subtle
+        if skin_tone['is_very_light']:
+            base_factor = 0.95   # Very subtle for very light skin
+        elif skin_tone['is_light']:
+            base_factor = 0.90   # Light skin needs gentle shadowing
+        elif skin_tone['is_medium']:
+            base_factor = 0.85   # Medium skin can handle slightly more
+        elif skin_tone['is_dark']:
+            base_factor = 0.80   # Dark skin needs more contrast
+        else:  # very_dark
+            base_factor = 0.75   # Very dark skin needs most contrast
         
-        # Lighter skin needs less darkening to avoid harsh contrast
-        if skin_tone['is_light']:
-            base_factor = 0.82
-        else:
-            base_factor = 0.68
-        
-        # Adjust based on warmth (warm tones can handle slightly more contrast)
+        # Fine-tune based on undertones (very subtle adjustments)
         if skin_tone['is_warm']:
-            base_factor *= 0.95
-        else:
-            base_factor *= 1.05
+            base_factor *= 0.98   # Warm tones slightly less darkening
+        elif skin_tone['is_cool']:
+            base_factor *= 0.96   # Cool tones slightly more darkening
         
-        return base_factor
+        # Ensure we never go below natural limits
+        return max(0.70, min(0.98, base_factor))
     
     def _get_adaptive_highlighting_factor(self, skin_tone: Dict[str, float]) -> float:
-        """Calculate adaptive highlighting factor based on skin tone."""
-        base_factor = 1.25
+        """Calculate NATURAL highlighting factor for subtle enhancement."""
+        # NATURAL base factors - subtle enhancement only
+        if skin_tone['is_very_light']:
+            base_factor = 1.08   # Very subtle for very light skin
+        elif skin_tone['is_light']:
+            base_factor = 1.12   # Light skin gentle highlighting
+        elif skin_tone['is_medium']:
+            base_factor = 1.18   # Medium skin moderate highlighting
+        elif skin_tone['is_dark']:
+            base_factor = 1.25   # Dark skin more visible highlighting
+        else:  # very_dark
+            base_factor = 1.35   # Very dark skin needs most highlighting
         
-        # Light skin needs gentler highlighting
-        if skin_tone['is_light']:
-            base_factor = 1.2
-        else:
-            base_factor = 1.35
-        
-        # Warm tones can handle more highlighting
+        # Fine-tune based on undertones (very subtle adjustments)
         if skin_tone['is_warm']:
-            base_factor *= 1.1
-        else:
-            base_factor *= 0.95
+            base_factor *= 1.05   # Warm tones slightly more highlighting
+        elif skin_tone['is_cool']:
+            base_factor *= 1.03   # Cool tones slightly less highlighting
         
-        return base_factor
+        # Ensure we stay within natural limits
+        return max(1.05, min(1.40, base_factor))
     
     def _create_shadow_color(self, channel: np.ndarray, skin_tone: Dict[str, float], 
                            color_channel: int) -> np.ndarray:
-        """Create natural shadow color that's not just darker."""
-        # Start with darkened base
+        """Create NATURAL shadow color that harmonizes with existing skin tone."""
+        # Use the natural darkening factor (0.70-0.98)
         darkening_factor = self._get_adaptive_darkening_factor(skin_tone)
         shadow_base = channel * darkening_factor
         
-        # Add color temperature adjustment for natural shadows
+        # Get the person's natural skin RGB values for color matching
+        skin_rgb = skin_tone['rgb']
+        current_channel_value = skin_rgb[2-color_channel]  # Convert BGR to RGB indexing
+        
+        # Create shadows that are natural variations of existing skin color
         if color_channel == 0:  # Blue channel
-            # Shadows tend to be slightly cooler (more blue)
             if skin_tone['is_warm']:
-                shadow_base = shadow_base * 1.02  # Slight blue boost for warm skin
+                # Warm skin: reduce blue for natural warm shadows
+                adjustment = 0.95 + (current_channel_value / 255) * 0.03  # Very subtle
+            else:
+                # Cool skin: maintain blue for natural cool shadows  
+                adjustment = 0.98 + (current_channel_value / 255) * 0.02
         elif color_channel == 1:  # Green channel
-            # Neutral adjustment
-            pass
+            # Reduce green slightly for all skin tones (natural shadow characteristic)
+            adjustment = 0.94 + (current_channel_value / 255) * 0.04
         elif color_channel == 2:  # Red channel
-            # Shadows have less red/warmth
-            shadow_base = shadow_base * 0.98
+            if skin_tone['is_warm']:
+                # Warm skin: maintain red warmth in shadows
+                adjustment = 0.98 + (current_channel_value / 255) * 0.02
+            else:
+                # Cool skin: reduce red slightly for cooler shadows
+                adjustment = 0.96 + (current_channel_value / 255) * 0.03
+        
+        # Apply natural adjustment (very subtle color shifts)
+        shadow_base = shadow_base * adjustment
         
         return shadow_base
     
     def _create_highlight_color(self, channel: np.ndarray, skin_tone: Dict[str, float], 
                               color_channel: int) -> np.ndarray:
-        """Create natural highlight color that's warmer and brighter."""
-        # Start with brightened base
+        """Create NATURAL highlight color that enhances existing skin tone."""
+        # Use the natural highlighting factor (1.05-1.40)
         highlighting_factor = self._get_adaptive_highlighting_factor(skin_tone)
         highlight_base = np.minimum(channel * highlighting_factor, 255)
         
-        # Add warmth to highlights
+        # Get the person's natural skin RGB values for color matching
+        skin_rgb = skin_tone['rgb']
+        current_channel_value = skin_rgb[2-color_channel]  # Convert BGR to RGB indexing
+        
+        # Create highlights that naturally enhance existing skin tone
         if color_channel == 0:  # Blue channel
-            # Highlights have less blue (warmer)
-            highlight_base = highlight_base * 0.98
-        elif color_channel == 1:  # Green channel
-            # Slight boost for natural skin glow
             if skin_tone['is_warm']:
-                highlight_base = highlight_base * 1.01
+                # Warm skin: slightly reduce blue for warm highlights
+                adjustment = 0.97 + (current_channel_value / 255) * 0.02  # Very subtle
+            else:
+                # Cool skin: maintain blue for natural cool highlights
+                adjustment = 0.99 + (current_channel_value / 255) * 0.01
+        elif color_channel == 1:  # Green channel
+            if skin_tone['is_warm']:
+                # Warm skin: enhance green for natural warm glow
+                adjustment = 1.02 + (current_channel_value / 255) * 0.01
+            else:
+                # Cool skin: slightly enhance green for natural radiance
+                adjustment = 1.01 + (current_channel_value / 255) * 0.01
         elif color_channel == 2:  # Red channel
-            # Highlights are warmer (more red/yellow)
-            highlight_base = highlight_base * 1.03
+            if skin_tone['is_warm']:
+                # Warm skin: enhance red for natural warm glow
+                adjustment = 1.03 + (current_channel_value / 255) * 0.02
+            else:
+                # Cool skin: slight red enhancement for healthy look
+                adjustment = 1.01 + (current_channel_value / 255) * 0.01
+        
+        # Apply natural adjustment (very subtle color enhancement)
+        highlight_base = np.minimum(highlight_base * adjustment, 255)
         
         return highlight_base
     
@@ -909,3 +1355,135 @@ class ContouringMask:
             
         except Exception:
             return None
+            
+    def _validate_input_image(self, image: np.ndarray) -> bool:
+        """Validate input image quality and properties."""
+        if image is None or image.size == 0:
+            return False
+            
+        h, w = image.shape[:2]
+        if h < 100 or w < 100:  # Too small for meaningful enhancement
+            return False
+            
+        if len(image.shape) != 3:  # Must be color image
+            return False
+            
+        # Check for reasonable dynamic range
+        if np.std(image) < 10:  # Too flat/uniform
+            return False
+            
+        return True
+    
+    def _validate_face_region(self, face_region: np.ndarray) -> bool:
+        """Validate face region quality for safe enhancement."""
+        if face_region.size == 0:
+            return False
+            
+        h, w = face_region.shape[:2]
+        if h < 64 or w < 64:  # Too small for detailed enhancement
+            return False
+            
+        # Check if region contains meaningful facial features
+        gray = cv2.cvtColor(face_region, cv2.COLOR_BGR2GRAY)
+        
+        # Basic feature detection - look for variation that suggests facial features
+        if np.std(gray) < 15:  # Too uniform to be a real face
+            return False
+            
+        return True
+    
+    def _apply_safety_limits(self, base_intensity: float, face_region: np.ndarray) -> float:
+        """Apply safety limits to prevent unnatural enhancement."""
+        # Analyze face region to determine safe intensity limits
+        skin_tone = self._analyze_skin_tone(face_region)
+        
+        # Calculate maximum safe intensity based on skin characteristics
+        if skin_tone['is_very_light']:
+            max_safe_intensity = 0.08  # Very conservative for light skin
+        elif skin_tone['is_light']:
+            max_safe_intensity = 0.12  # Conservative for light skin
+        elif skin_tone['is_medium']:
+            max_safe_intensity = 0.15  # Moderate for medium skin
+        else:
+            max_safe_intensity = 0.18  # Slightly higher for darker skin
+        
+        # Additional safety based on image quality
+        brightness = np.mean(face_region)
+        if brightness < 80:  # Very dark image
+            max_safe_intensity *= 0.8
+        elif brightness > 200:  # Very bright image
+            max_safe_intensity *= 0.7
+        
+        return min(base_intensity, max_safe_intensity)
+    
+    def _validate_step_result(self, result: np.ndarray, original: np.ndarray, step_name: str) -> np.ndarray:
+        """Validate each contouring step result for natural appearance."""
+        # Calculate difference between result and original
+        diff = np.abs(result.astype(np.float32) - original.astype(np.float32))
+        max_diff = np.max(diff)
+        mean_diff = np.mean(diff)
+        
+        # Safety thresholds for natural appearance
+        MAX_PIXEL_CHANGE = 30   # No pixel should change more than this
+        MAX_MEAN_CHANGE = 8     # Overall change should be subtle
+        
+        if max_diff > MAX_PIXEL_CHANGE or mean_diff > MAX_MEAN_CHANGE:
+            print(f"Warning: {step_name} step too intense (max: {max_diff:.1f}, mean: {mean_diff:.1f}) - using original")
+            return original  # Return original if change is too dramatic
+        
+        return result
+    
+    def _validate_final_result(self, final: np.ndarray, original: np.ndarray) -> bool:
+        """Validate final result for overall natural appearance."""
+        # Overall validation of final result
+        diff = np.abs(final.astype(np.float32) - original.astype(np.float32))
+        max_diff = np.max(diff)
+        mean_diff = np.mean(diff)
+        
+        # Final safety thresholds
+        FINAL_MAX_PIXEL_CHANGE = 25  # Maximum change for any pixel
+        FINAL_MAX_MEAN_CHANGE = 6    # Overall change should be very subtle
+        
+        if max_diff > FINAL_MAX_PIXEL_CHANGE:
+            print(f"Final validation failed: max pixel change too high ({max_diff:.1f})")
+            return False
+        
+        if mean_diff > FINAL_MAX_MEAN_CHANGE:
+            print(f"Final validation failed: mean change too high ({mean_diff:.1f})")
+            return False
+        
+        return True
+    
+    def _blend_face_naturally(self, original_image: np.ndarray, enhanced_face: np.ndarray, 
+                             bbox: List[int]) -> np.ndarray:
+        """Blend enhanced face naturally back into original image."""
+        result = original_image.copy()
+        x1, y1, x2, y2 = bbox
+        
+        # Create natural blending mask with feathered edges
+        h, w = enhanced_face.shape[:2]
+        blend_mask = np.ones((h, w), dtype=np.float32)
+        
+        # Feather edges for seamless blending
+        feather_size = min(h, w) // 10  # 10% feathering
+        
+        for i in range(feather_size):
+            alpha = (i + 1) / feather_size
+            # Top edge
+            blend_mask[i, :] *= alpha
+            # Bottom edge
+            blend_mask[h-1-i, :] *= alpha
+            # Left edge
+            blend_mask[:, i] *= alpha
+            # Right edge
+            blend_mask[:, w-1-i] *= alpha
+        
+        # Apply natural blending
+        for c in range(3):
+            enhanced_channel = enhanced_face[:, :, c].astype(np.float32)
+            original_channel = result[y1:y2, x1:x2, c].astype(np.float32)
+            
+            blended = blend_mask * enhanced_channel + (1 - blend_mask) * original_channel
+            result[y1:y2, x1:x2, c] = np.clip(blended, 0, 255).astype(np.uint8)
+        
+        return result

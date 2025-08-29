@@ -34,8 +34,8 @@ facial_enhancement:
   # Contouring and makeup application
   contouring:
     enabled: true
-    intensity: 0.7  # Overall contouring intensity (0.0 - 1.0)
-    blend_strength: 0.5  # How strongly to blend with original (0.0 - 1.0)
+    intensity: 1.5  # Overall contouring intensity (0.0 - 1.0) - ПІДВИЩЕНО
+    blend_strength: 0.8  # How strongly to blend with original (0.0 - 1.0) - ПІДВИЩЕНО
     
   # Expression lines and aging
   expression_lines:
@@ -46,29 +46,29 @@ facial_enhancement:
   # Person-specific settings
   person_profiles:
     massy:
-      contour_strength: 0.8  # Stronger contouring for Massy
-      expression_strength: 0.5
+      contour_strength: 1.2  # Stronger contouring for Massy - ПІДВИЩЕНО
+      expression_strength: 0.8  # ПІДВИЩЕНО
       lip_enhancement:
-        cupids_bow_intensity: 0.7  # Cupid's bow definition
-        lip_volume_boost: 0.6  # Lower lip volume enhancement
-        corner_definition: 0.5  # Lip corner shadows
-        perioral_wrinkles: 0.4  # Wrinkles around mouth area
-        color_intensity: 0.8  # Lip color enhancement
+        cupids_bow_intensity: 1.2  # Cupid's bow definition - ПІДВИЩЕНО
+        lip_volume_boost: 1.0  # Lower lip volume enhancement - ПІДВИЩЕНО
+        corner_definition: 0.8  # Lip corner shadows - ПІДВИЩЕНО
+        perioral_wrinkles: 0.8  # Wrinkles around mouth area - ПІДВИЩЕНО
+        color_intensity: 1.5  # Lip color enhancement - ПІДВИЩЕНО
     orbi:
-      contour_strength: 0.7  # Moderate contouring for Orbi  
-      expression_strength: 0.6
+      contour_strength: 1.0  # Moderate contouring for Orbi - ПІДВИЩЕНО
+      expression_strength: 0.8  # ПІДВИЩЕНО
       lip_enhancement:
-        cupids_bow_intensity: 0.6  # Subtle Cupid's bow
-        lip_volume_boost: 0.5  # Moderate lip volume
-        corner_definition: 0.4  # Light corner shadows
-        perioral_wrinkles: 0.3  # Minimal perioral lines
-        color_intensity: 0.6  # Natural lip color
+        cupids_bow_intensity: 1.0  # Subtle Cupid's bow - ПІДВИЩЕНО
+        lip_volume_boost: 0.8  # Moderate lip volume - ПІДВИЩЕНО
+        corner_definition: 0.7  # Light corner shadows - ПІДВИЩЕНО
+        perioral_wrinkles: 0.6  # Minimal perioral lines - ПІДВИЩЕНО
+        color_intensity: 1.2  # Natural lip color - ПІДВИЩЕНО
     yana:
-      contour_strength: 0.75  # Balanced contouring for Yana
-      expression_strength: 0.55
+      contour_strength: 1.1  # Balanced contouring for Yana - ПІДВИЩЕНО
+      expression_strength: 0.75  # ПІДВИЩЕНО
       lip_enhancement:
-        cupids_bow_intensity: 0.65  # Balanced Cupid's bow
-        lip_volume_boost: 0.55  # Natural lip volume
-        corner_definition: 0.45  # Moderate corner definition
-        perioral_wrinkles: 0.35  # Light perioral wrinkles
-        color_intensity: 0.7  # Enhanced but natural lip color
+        cupids_bow_intensity: 1.1  # Balanced Cupid's bow - ПІДВИЩЕНО
+        lip_volume_boost: 0.8  # Natural lip volume - ПІДВИЩЕНО
+        corner_definition: 0.7  # Moderate corner definition - ПІДВИЩЕНО
+        perioral_wrinkles: 0.7  # Light perioral wrinkles - ПІДВИЩЕНО
+        color_intensity: 1.3  # Enhanced but natural lip color - ПІДВИЩЕНО
